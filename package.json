@@ -1,0 +1,33 @@
+{
+  "name": "sails-rest",
+  "version": "0.0.1",
+  "description": "REST adapter for Sails.js",
+  "main": "SailsRest.js",
+  "scripts": {
+    "test": "NODE_ENV=test node test/integration/runner.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/balderdashy/sails-adapter-boilerplate.git"
+  },
+  "keywords": [
+    "orm",
+    "waterline",
+    "sails",
+    "sailsjs",
+    "sails.js"
+  ],
+  "author": "Your name here",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "async": "0.1.22",
+    "restler": "0.2.2",
+    "lodash": "1.2.1",
+    "express": "3.x"
+  },
+  "devDependencies": {
+    "mocha": "~1.10.0",
+    "waterline-adapter-tests": "0.9.0"
+  }
+}
