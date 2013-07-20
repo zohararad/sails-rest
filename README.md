@@ -31,8 +31,8 @@ module.exports.adapters = {
     port     : 80,                 // api port
     protocol : 'http',             // HTTP protocol (http | https)
     pathname : '/api/v1'           // base api path
-    cache    : {
-      engine : require('someCacheEngine') // see [Caching](#Caching)
+    cache    : {                   // optional cache engine
+      engine : require('someCacheEngine') // see Caching below
     }
   }
 
