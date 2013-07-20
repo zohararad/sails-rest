@@ -12,7 +12,8 @@ module.exports = (function(){
   "use strict";
 
   var connection = {},
-      defs = {};
+      defs = {},
+      cache;
 
   // Private functions
   /**
@@ -49,7 +50,10 @@ module.exports = (function(){
    */
   function createConnection(collection){
     defs[collection.identity] = collection.definition;
-    var c = _.extend({}, collection.defaults,collection.config);
+    if(collection.config.cache){
+      cache = collection.config.cache;
+    }
+    var c = _.extend({}, collection.defaults, collection.config);
     return {
       protocol: c.protocol,
       hostname: c.host,
@@ -122,6 +126,9 @@ module.exports = (function(){
     create: function(collectionName, values, cb) {
       var uri = getUrl(collectionName);
       rest.post(uri, {data: values}).on('success', function(data, response){
+        if(cache){
+          cache.engine.del(uri);
+        }
         cb(null, formatResult(data, collectionName));
       }).on('error', function(err, response){
         cb(err, response);
@@ -130,16 +137,28 @@ module.exports = (function(){
 
     find: function(collectionName, options, cb){
       var uri = getUrl(collectionName, options);
-      rest.get(uri).on('success', function(data, response){
-        cb(null, getResultsAsCollection(data, collectionName));
-      }).on('error', function(err, response){
-        cb(err, response);
-      });
+      var r = cache && cache.engine.get(uri);
+      if(r){
+        cb(null, r);
+      } else {
+        rest.get(uri).on('success', function(data, response){
+          var r = getResultsAsCollection(data, collectionName);
+          if(cache){
+            cache.engine.set(uri, r);
+          }
+          cb(null, r);
+        }).on('error', function(err, response){
+          cb(err, response);
+        });
+      }
     },
 
     update: function(collectionName, options, values, cb) {
       var uri = getUrl(collectionName, options);
       rest.put(uri, {data: values}).on('success', function(data, response){
+        if(cache){
+          cache.engine.del(uri);
+        }
         cb(null, getResultsAsCollection(data, collectionName));
       }).on('error', function(err, response){
         cb(err, response);
