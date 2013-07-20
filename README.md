@@ -35,3 +35,8 @@ module.exports.adapters = {
 
 };
 ```
+
+## TODO
+
+* Add some sort of caching support
+* Some create tests currently fail
