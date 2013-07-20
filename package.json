@@ -8,16 +8,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/balderdashy/sails-adapter-boilerplate.git"
+    "url": "https://github.com/zohararad/sails-rest.git"
   },
   "keywords": [
     "orm",
     "waterline",
     "sails",
     "sailsjs",
-    "sails.js"
+    "sails.js",
+    "REST",
+    "rest",
+    "RESTful"
   ],
-  "author": "Your name here",
+  "author": "Zohar Arad",
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
