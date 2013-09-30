@@ -11,7 +11,7 @@ var async = require('async'),
 module.exports = (function(){
   "use strict";
 
-  var connection = {},
+  var connections ={},
       defs = {},
       cache;
 
@@ -23,7 +23,7 @@ module.exports = (function(){
    * @returns {string}
    */
   function resolvePath(collectionName, options){
-    var pathname = connection.pathname + '/' + collectionName;
+    var pathname = connections[collectionName].pathname + '/' + collectionName;
     if(options && options.where && options.where.id){
       pathname += '/'+ options.where.id;
       delete options.where.id;
@@ -39,27 +39,8 @@ module.exports = (function(){
    */
   function getUrl(collectionName, options){
     var pathname = resolvePath(collectionName, options),
-        o = _.extend({}, connection, {pathname: pathname, query: (options && options.where ? options.where : {})});
+        o = _.extend({}, connections[collectionName], {pathname: pathname, query: (options && options.where ? options.where : {})});
     return url.format(o);
-  }
-
-  /**
-   * Create a connection object
-   * @param collection collection object from Waterline ORM
-   * @returns {{protocol: (*|string|req.protocol|string|string), hostname: (string|config.host|request.host|Request.request.host|req.host|host|string), port: (*|number|config.port|request.port|OPTIONS.port|request.port|req.port|request.port|request.port|creq.port|Request.request.port|Function|string|number|number|Request.url.port), pathname: (*|string|config.pathname|pathname|string)}}
-   */
-  function createConnection(collection){
-    defs[collection.identity] = collection.definition;
-    if(collection.config.cache){
-      cache = collection.config.cache;
-    }
-    var c = _.extend({}, collection.defaults, collection.config);
-    return {
-      protocol: c.protocol,
-      hostname: c.host,
-      port: c.port,
-      pathname: c.pathname
-    };
   }
 
   /**
@@ -119,7 +100,17 @@ module.exports = (function(){
     },
 
     registerCollection: function(collection, cb) {
-      connection = createConnection(collection);
+      defs[collection.identity] = collection.definition;
+      if(collection.config.cache){
+        cache = collection.config.cache;
+      }
+      var c = _.extend({}, collection.defaults, collection.config);
+      connections[collection.identity] = {
+        protocol: c.protocol,
+        hostname: c.host,
+        port: c.port,
+        pathname: c.pathname
+      };
       cb();
     },
 
