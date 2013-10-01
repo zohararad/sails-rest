@@ -17,33 +17,6 @@ module.exports = (function(){
 
   // Private functions
   /**
-   * Resolves collection name to API path
-   * @param collectionName collection name
-   * @param options API query options
-   * @returns {string}
-   */
-  function resolvePath(collectionName, options){
-    var pathname = connections[collectionName].pathname + '/' + collectionName;
-    if(options && options.where && options.where.id){
-      pathname += '/'+ options.where.id;
-      delete options.where.id;
-    }
-    return pathname;
-  }
-
-  /**
-   * Get resolved API resource URL, including resource path and query string
-   * @param collectionName collection name
-   * @param options API query options
-   * @returns {Object|ServerResponse}
-   */
-  function getUrl(collectionName, options){
-    var pathname = resolvePath(collectionName, options),
-        o = _.extend({}, connections[collectionName], {pathname: pathname, query: (options && options.where ? options.where : {})});
-    return url.format(o);
-  }
-
-  /**
    * Format result object according to schema
    * @param result result object
    * @param collectionName name of collection the result object belongs to
@@ -87,6 +60,97 @@ module.exports = (function(){
     return formatResults(a, collectionName);
   }
 
+  /**
+   * Makes a REST request via restler
+   * @param collectionName name of collection the result object belongs to
+   * @param methodName name of CRUD method being used
+   * @param cb callback from method
+   * @param options options from method
+   * @param values values from method
+   * @returns {*}
+   */
+  function makeRequest(collectionName, methodName, cb, options, values) {
+    var r = null,
+        opt = null,
+        restMethod = connections[collectionName].methods[methodName],
+        connection = _.clone(connections[collectionName]),
+        pathname = connection.pathname + '/' + connection.resource + (connection.action ? '/' + connection.action : '');
+
+    if (options && options.where) {
+      // Add id to pathname if provided
+      if (options.where.id) {
+        pathname += '/'+ options.where.id;
+        delete options.where.id;
+      }
+
+      // Add where statement as query parameters if requesting via GET
+      if (restMethod === 'get') {
+        _.extend(connection.query, options.where);
+      }
+      // Set opt if additional where statements are available
+      else if (_.size(options.where)) {
+        opt = options.where;
+      }
+      else {
+        delete options.where;
+      }
+    }
+
+    if (!opt && values) {
+      opt = {data: values};
+
+      if (options) {
+        opt = _.extend(options, opt);
+      }
+    }
+
+    // Add pathname to connection
+    _.extend(connection, {pathname: pathname});
+
+    // Format URI
+    var uri = url.format(connection);
+
+    // Retrieve data from the cache 
+    if (methodName === 'find') {
+      r = cache[collectionName] && cache[collectionName].engine.get(uri);
+    }
+    
+    if (r) {
+      cb(null, r);
+    }
+    else if (_.isFunction(rest[restMethod])) {
+      // Make request via restler
+      rest[restMethod](uri, opt).on('complete', function(result, response) {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          cb(result);
+        }
+        else {
+          if (methodName === 'find') {
+            r = getResultsAsCollection(result, collectionName);
+
+            if (cache[collectionName]) {
+              cache[collectionName].engine.set(uri, r);
+            }
+          }
+          else {
+            r = formatResult(result, collectionName);
+
+            if (cache[collectionName]) {
+              cache[collectionName].engine.del(uri);
+            }
+          }
+
+          cb(null, r);
+        }
+      });
+    }
+    else {
+      cb(new Error('Invalid REST method: ' + restMethod));
+    }
+
+    return false;
+  }
+
   // Adapter
   var adapter = {
 
@@ -96,73 +160,55 @@ module.exports = (function(){
       host: 'localhost',
       port: 80,
       protocol: 'http',
-      pathname: ''
+      pathname: '',
+      resource: null,
+      action: null,
+      query: {},
+      methods: {
+        create: 'post',
+        find: 'get',
+        update: 'put',
+        destroy: 'delete'
+      }
     },
 
     registerCollection: function(collection, cb) {
       defs[collection.identity] = collection.definition;
-      if(collection.config.cache){
+
+      if (collection.config.cache) {
         cache[collection.identity] = collection.config.cache;
       }
+
       var c = _.extend({}, collection.defaults, collection.config);
+
       connections[collection.identity] = {
         protocol: c.protocol,
         hostname: c.host,
         port: c.port,
-        pathname: c.pathname
+        pathname: c.pathname,
+        query: c.query,
+        resource: c.resource || collection.identity,
+        action: c.action,
+        methods: _.extend({}, collection.defaults.methods, c.methods)
       };
+
       cb();
     },
 
     create: function(collectionName, values, cb) {
-      var uri = getUrl(collectionName);
-      rest.post(uri, {data: values}).on('success', function(data, response){
-        if(cache[collectionName]){
-          cache[collectionName].engine.del(uri);
-        }
-        cb(null, formatResult(data, collectionName));
-      }).on('error', function(err, response){
-        cb(err, response);
-      });
+      makeRequest(collectionName, 'create', cb, null, values);
     },
 
     find: function(collectionName, options, cb){
-      var uri = getUrl(collectionName, options);
-      var r = cache[collectionName] && cache[collectionName].engine.get(uri);
-      if(r){
-        cb(null, r);
-      } else {
-        rest.get(uri).on('success', function(data, response){
-          var r = getResultsAsCollection(data, collectionName);
-          if(cache[collectionName]){
-            cache[collectionName].engine.set(uri, r);
-          }
-          cb(null, r);
-        }).on('error', function(err, response){
-          cb(err, response);
-        });
-      }
+      makeRequest(collectionName, 'find', cb, options);
     },
 
     update: function(collectionName, options, values, cb) {
-      var uri = getUrl(collectionName, options);
-      rest.put(uri, {data: values}).on('success', function(data, response){
-        if(cache[collectionName]){
-          cache[collectionName].engine.del(uri);
-        }
-        cb(null, getResultsAsCollection(data, collectionName));
-      }).on('error', function(err, response){
-        cb(err, response);
-      });
+      makeRequest(collectionName, 'update', cb, options, values);
     },
 
     destroy: function(collectionName, options, cb) {
-      var uri = getUrl(collectionName, options);
-      rest.delete(uri).on('success', function(data, response){
-        cb();
-      }).on('error', function(err, response){
-        cb(err);
-      });
+      makeRequest(collectionName, 'delete', cb, options);
     },
 
     drop: function(collectionName, cb) {
