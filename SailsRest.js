@@ -82,7 +82,7 @@ module.exports = (function(){
    * @returns {*}
    */
   function getResultsAsCollection(data, collectionName){
-    var d = (data['objects'] || data['results'] || data),
+    var d = (data.objects || data.results || data),
         a = _.isArray(d) ? d : [d];
     return formatResults(a, collectionName);
   }
