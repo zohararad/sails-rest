@@ -13,7 +13,7 @@ module.exports = (function(){
 
   var connections ={},
       defs = {},
-      cache;
+      cache = {};
 
   // Private functions
   /**
@@ -102,7 +102,7 @@ module.exports = (function(){
     registerCollection: function(collection, cb) {
       defs[collection.identity] = collection.definition;
       if(collection.config.cache){
-        cache = collection.config.cache;
+        cache[collection.identity] = collection.config.cache;
       }
       var c = _.extend({}, collection.defaults, collection.config);
       connections[collection.identity] = {
@@ -117,8 +117,8 @@ module.exports = (function(){
     create: function(collectionName, values, cb) {
       var uri = getUrl(collectionName);
       rest.post(uri, {data: values}).on('success', function(data, response){
-        if(cache){
-          cache.engine.del(uri);
+        if(cache[collectionName]){
+          cache[collectionName].engine.del(uri);
         }
         cb(null, formatResult(data, collectionName));
       }).on('error', function(err, response){
@@ -128,14 +128,14 @@ module.exports = (function(){
 
     find: function(collectionName, options, cb){
       var uri = getUrl(collectionName, options);
-      var r = cache && cache.engine.get(uri);
+      var r = cache[collectionName] && cache[collectionName].engine.get(uri);
       if(r){
         cb(null, r);
       } else {
         rest.get(uri).on('success', function(data, response){
           var r = getResultsAsCollection(data, collectionName);
-          if(cache){
-            cache.engine.set(uri, r);
+          if(cache[collectionName]){
+            cache[collectionName].engine.set(uri, r);
           }
           cb(null, r);
         }).on('error', function(err, response){
@@ -147,8 +147,8 @@ module.exports = (function(){
     update: function(collectionName, options, values, cb) {
       var uri = getUrl(collectionName, options);
       rest.put(uri, {data: values}).on('success', function(data, response){
-        if(cache){
-          cache.engine.del(uri);
+        if(cache[collectionName]){
+          cache[collectionName].engine.del(uri);
         }
         cb(null, getResultsAsCollection(data, collectionName));
       }).on('error', function(err, response){
