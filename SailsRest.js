@@ -168,7 +168,7 @@ module.exports = (function(){
         create: 'post',
         find: 'get',
         update: 'put',
-        destroy: 'delete'
+        destroy: 'del'
       }
     },
 
@@ -208,7 +208,7 @@ module.exports = (function(){
     },
 
     destroy: function(collectionName, options, cb) {
-      makeRequest(collectionName, 'delete', cb, options);
+      makeRequest(collectionName, 'destroy', cb, options);
     },
 
     drop: function(collectionName, cb) {
