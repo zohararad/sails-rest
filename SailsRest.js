@@ -208,7 +208,29 @@ module.exports = (function(){
     },
 
     destroy: function(collectionName, options, cb) {
-      makeRequest(collectionName, 'destroy', cb, options);
+      if (options.where && options.where.id) {
+        // Destroy by id
+        makeRequest(collectionName, 'destroy', cb, options);
+      }
+      else {
+        // Destroy by query
+        makeRequest(collectionName, 'find', function(error, results) {
+          if (error) {
+            cb(error);
+          }
+          else {
+            _.each(results, function(result, i) {
+              options = {
+                where: {
+                  id: result.id
+                }
+              };
+
+              makeRequest(collectionName, 'destroy', (i + 1) === results.length ? cb : function(){}, options);
+            });
+          }
+        }, options);
+      }
     },
 
     drop: function(collectionName, cb) {
