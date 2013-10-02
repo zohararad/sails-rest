@@ -121,7 +121,7 @@ module.exports = (function(){
     else if (_.isFunction(rest[restMethod])) {
       // Make request via restler
       rest[restMethod](uri, opt).on('complete', function(result, response) {
-        if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (result instanceof Error || (response && response.statusCode && (response.statusCode < 200 || response.statusCode >= 300))) {
           cb(result);
         }
         else {
