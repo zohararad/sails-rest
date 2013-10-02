@@ -73,7 +73,7 @@ module.exports = (function(){
     var r = null,
         opt = null,
         restMethod = connections[collectionName].methods[methodName],
-        connection = _.clone(connections[collectionName]),
+        connection = _.cloneDeep(connections[collectionName]),
         pathname = connection.pathname + '/' + connection.resource + (connection.action ? '/' + connection.action : '');
 
     if (options && options.where) {
