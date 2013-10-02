@@ -23,15 +23,14 @@ module.exports = (function(){
    * @returns {*}
    */
   function formatResult(result, collectionName){
-    var def, schema = defs[collectionName];
-    for(def in schema) {
-      if(schema.hasOwnProperty(def)){
-        var d = schema[def];
-        if(d.type.toLowerCase().indexOf('date') > -1 && result[def]){
-          result[def] = new Date(result[def]);
-        }
+    _.each(defs[collectionName], function(def, key) {
+      if (def.type.match(/date/i)) {
+        result[key] = new Date(result[key] ? result[key] : null);
       }
-    }
+
+      // if (!_.has(result, key))
+    });
+
     return result;
   }
 
@@ -42,9 +41,10 @@ module.exports = (function(){
    * @returns {*}
    */
   function formatResults(results, collectionName){
-    results.forEach(function(result){
+    results.forEach(function(result) {
       formatResult(results, collectionName);
     });
+
     return results;
   }
 
@@ -57,6 +57,7 @@ module.exports = (function(){
   function getResultsAsCollection(data, collectionName){
     var d = (data.objects || data.results || data),
         a = _.isArray(d) ? d : [d];
+
     return formatResults(a, collectionName);
   }
 
