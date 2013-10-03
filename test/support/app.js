@@ -15,6 +15,12 @@ app.get('/api/v1/:collection', function(req, res){
       constraints = {},
       r = [];
 
+  if (!_.isEmpty(query)) {
+    _.each(query, function(param, key) {
+      query[key] = decodeURIComponent(param);
+    });
+  }
+
   if (Models[collection]) {
     r = _.filter(Models[collection], query);
   }
