@@ -27,8 +27,6 @@ module.exports = (function(){
       if (def.type.match(/date/i)) {
         result[key] = new Date(result[key] ? result[key] : null);
       }
-
-      // if (!_.has(result, key))
     });
 
     return result;
@@ -83,6 +81,27 @@ module.exports = (function(){
         pathname += '/'+ options.where.id;
         delete options.where.id;
       }
+      else if (methodName === 'destroy' || methodName == 'update') {
+        // Find all and make new request for each.
+        makeRequest(collectionName, 'find', function(error, results) {
+          if (error) {
+            cb(error);
+          }
+          else {
+            _.each(results, function(result, i) {
+              options = {
+                where: {
+                  id: result.id
+                }
+              };
+
+              makeRequest(collectionName, methodName, (i + 1) === results.length ? cb : function(){}, options, values);
+            });
+          }
+        }, options);
+
+        return;
+      }
 
       // Add where statement as query parameters if requesting via GET
       if (restMethod === 'get') {
@@ -115,7 +134,7 @@ module.exports = (function(){
     if (methodName === 'find') {
       r = cache[collectionName] && cache[collectionName].engine.get(uri);
     }
-    
+
     if (r) {
       cb(null, r);
     }
@@ -209,29 +228,7 @@ module.exports = (function(){
     },
 
     destroy: function(collectionName, options, cb) {
-      if (options.where && options.where.id) {
-        // Destroy by id
-        makeRequest(collectionName, 'destroy', cb, options);
-      }
-      else {
-        // Destroy by query
-        makeRequest(collectionName, 'find', function(error, results) {
-          if (error) {
-            cb(error);
-          }
-          else {
-            _.each(results, function(result, i) {
-              options = {
-                where: {
-                  id: result.id
-                }
-              };
-
-              makeRequest(collectionName, 'destroy', (i + 1) === results.length ? cb : function(){}, options);
-            });
-          }
-        }, options);
-      }
+      makeRequest(collectionName, 'destroy', cb, options);
     },
 
     drop: function(collectionName, cb) {
