@@ -12,7 +12,6 @@ app.get('/api/v1/:collection', function(req, res){
   var collection = req.params.collection,
       id = parseInt(req.params.id, 10),
       query = _.isEmpty(req.query) ? null : req.query,
-      constraints = {},
       r = [];
 
   if (!_.isEmpty(query)) {
