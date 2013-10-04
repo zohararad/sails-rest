@@ -25,7 +25,7 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "async": "0.1.22",
-    "restler": "git+https://github.com/danwrong/restler.git",
+    "restify": "2.6.0",
     "lodash": "1.2.1",
     "express": "3.x"
   },

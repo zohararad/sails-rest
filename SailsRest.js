@@ -4,16 +4,14 @@
 ---------------------------------------------------------------*/
 
 var async = require('async'),
-    rest = require('restler'),
+    restify = require('restify'),
     url = require('url'),
     _   = require('lodash');
 
 module.exports = (function(){
   "use strict";
 
-  var connections ={},
-      defs = {},
-      cache = {};
+  var collections = {};
 
   // Private functions
   /**
@@ -23,7 +21,7 @@ module.exports = (function(){
    * @returns {*}
    */
   function formatResult(result, collectionName){
-    _.each(defs[collectionName], function(def, key) {
+    _.each(collections[collectionName].definition, function(def, key) {
       if (def.type.match(/date/i)) {
         result[key] = new Date(result[key] ? result[key] : null);
       }
@@ -60,7 +58,7 @@ module.exports = (function(){
   }
 
   /**
-   * Makes a REST request via restler
+   * Makes a REST request via restify
    * @param collectionName name of collection the result object belongs to
    * @param methodName name of CRUD method being used
    * @param cb callback from method
@@ -71,9 +69,11 @@ module.exports = (function(){
   function makeRequest(collectionName, methodName, cb, options, values) {
     var r = null,
         opt = null,
-        restMethod = connections[collectionName].methods[methodName],
-        connection = _.cloneDeep(connections[collectionName]),
-        pathname = connection.pathname + '/' + connection.resource + (connection.action ? '/' + connection.action : '');
+        cache = collections[collectionName].cache,
+        config = _.cloneDeep(collections[collectionName].config),
+        connection = collections[collectionName].connection,
+        restMethod = config.methods[methodName],
+        pathname = config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
 
     if (options && options.where) {
       // Add id to pathname if provided
@@ -105,7 +105,7 @@ module.exports = (function(){
 
       // Add where statement as query parameters if requesting via GET
       if (restMethod === 'get') {
-        _.extend(connection.query, options.where);
+        _.extend(config.query, options.where);
       }
       // Set opt if additional where statements are available
       else if (_.size(options.where)) {
@@ -117,7 +117,7 @@ module.exports = (function(){
     }
 
     if (!opt && values) {
-      opt = {data: values};
+      opt = values;
 
       if (options) {
         opt = _.extend(options, opt);
@@ -125,44 +125,53 @@ module.exports = (function(){
     }
 
     // Add pathname to connection
-    _.extend(connection, {pathname: pathname});
+    _.extend(config, {pathname: pathname});
 
     // Format URI
-    var uri = url.format(connection);
+    var uri = url.format(config);
 
     // Retrieve data from the cache 
     if (methodName === 'find') {
-      r = cache[collectionName] && cache[collectionName].engine.get(uri);
+      r = cache && cache.engine.get(uri);
     }
 
     if (r) {
       cb(null, r);
     }
-    else if (_.isFunction(rest[restMethod])) {
-      // Make request via restler
-      rest[restMethod](uri, opt).on('complete', function(result, response) {
-        if (result instanceof Error || (response && response.statusCode && (response.statusCode < 200 || response.statusCode >= 300))) {
-          cb(result);
+    else if (_.isFunction(connection[restMethod])) {
+      var path = uri.replace(connection.url.href, '/');
+
+      var callback = function(err, req, res, obj) {
+        if (err) {
+          cb(err);
         }
         else {
           if (methodName === 'find') {
-            r = getResultsAsCollection(result, collectionName);
+            r = getResultsAsCollection(obj, collectionName);
 
-            if (cache[collectionName]) {
-              cache[collectionName].engine.set(uri, r);
+            if (cache) {
+              cache.engine.set(uri, r);
             }
           }
           else {
-            r = formatResult(result, collectionName);
-
-            if (cache[collectionName]) {
-              cache[collectionName].engine.del(uri);
+            r = formatResult(obj, collectionName);
+        
+            if (cache) {
+              cache.engine.del(uri);
             }
           }
 
           cb(null, r);
         }
-      });
+      };
+
+      // Make request via restify
+      if (opt) {
+        connection[restMethod](path, opt, callback);
+      }
+      else {
+        connection[restMethod](path, callback);
+      }
     }
     else {
       cb(new Error('Invalid REST method: ' + restMethod));
@@ -177,6 +186,7 @@ module.exports = (function(){
     syncable: false,
 
     defaults: {
+      type: 'json',
       host: 'localhost',
       port: 80,
       protocol: 'http',
@@ -193,24 +203,39 @@ module.exports = (function(){
     },
 
     registerCollection: function(collection, cb) {
-      defs[collection.identity] = collection.definition;
+      var c = _.extend({}, collection.defaults, collection.config),
+          clientMethod = 'create' + c.type.substr(0, 1).toUpperCase() + c.type.substr(1).toLowerCase() + 'Client';
 
-      if (collection.config.cache) {
-        cache[collection.identity] = collection.config.cache;
+      if (!_.isFunction(restify[clientMethod])) {
+        throw new Error('Invalid type provided');
       }
 
-      var c = _.extend({}, collection.defaults, collection.config);
+      collections[collection.identity] = {
+        config: {
+          protocol: c.protocol,
+          hostname: c.host,
+          port: c.port,
+          pathname: c.pathname,
+          query: c.query,
+          resource: c.resource || collection.identity,
+          action: c.action,
+          methods: _.extend({}, collection.defaults.methods, c.methods)
+        },
 
-      connections[collection.identity] = {
-        protocol: c.protocol,
-        hostname: c.host,
-        port: c.port,
-        pathname: c.pathname,
-        query: c.query,
-        resource: c.resource || collection.identity,
-        action: c.action,
-        methods: _.extend({}, collection.defaults.methods, c.methods)
+        connection: restify[clientMethod]({
+          url: url.format({
+            protocol: c.protocol,
+            hostname: c.host,
+            port: c.port
+          })
+        }),
+
+        definition: collection.definition
       };
+
+      if (collection.config.cache) {
+        collections[collection.identity].cache = collection.config.cache;
+      }
 
       cb();
     },
@@ -236,7 +261,7 @@ module.exports = (function(){
     },
 
     describe: function(collectionName, cb) {
-      cb(null, defs[collectionName]);
+      cb(null, collections[collectionName].definition);
     }
   };
 
