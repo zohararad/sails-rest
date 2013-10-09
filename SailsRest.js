@@ -21,11 +21,21 @@ module.exports = (function(){
    * @returns {*}
    */
   function formatResult(result, collectionName){
+    var config = collections[collectionName].config;
+
+    if (_.isFunction(config.beforeFormat)) {
+      config.beforeFormat(result);
+    }
+
     _.each(collections[collectionName].definition, function(def, key) {
       if (def.type.match(/date/i)) {
         result[key] = new Date(result[key] ? result[key] : null);
       }
     });
+
+    if (_.isFunction(config.afterFormat)) {
+      config.afterFormat(result);
+    }
 
     return result;
   }
@@ -38,7 +48,7 @@ module.exports = (function(){
    */
   function formatResults(results, collectionName){
     results.forEach(function(result) {
-      formatResult(results, collectionName);
+      formatResult(result, collectionName);
     });
 
     return results;
@@ -199,7 +209,9 @@ module.exports = (function(){
         find: 'get',
         update: 'put',
         destroy: 'del'
-      }
+      },
+      beforeFormat: null,
+      afterFormat: null
     },
 
     registerCollection: function(collection, cb) {
@@ -219,7 +231,9 @@ module.exports = (function(){
           query: c.query,
           resource: c.resource || collection.identity,
           action: c.action,
-          methods: _.extend({}, collection.defaults.methods, c.methods)
+          methods: _.extend({}, collection.defaults.methods, c.methods),
+          beforeFormat: c.beforeFormat,
+          afterFormat: c.afterFormat
         },
 
         connection: restify[clientMethod]({
