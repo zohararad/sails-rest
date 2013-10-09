@@ -27,12 +27,26 @@ module.exports.adapters = {
 
   rest: {
     module   : 'sails-rest',
-    hostname : 'api.somewhere.io', // api hostname
-    port     : 80,                 // api port
-    protocol : 'http',             // HTTP protocol (http | https)
-    pathname : '/api/v1'           // base api path
-    cache    : {                   // optional cache engine
-      engine : require('someCacheEngine') // see Caching below
+    type: 'json',                                           // expected response type (json | string | http)
+    host: 'api.somewhere.io',                               // api host
+    port     : 80,                                          // api port
+    protocol : 'http',                                      // HTTP protocol (http | https)
+    pathname : '/api/v1'                                    // base api path
+    resource: null,                                         // resource path to use (overrides model name)
+    action: null,                                           // action to use for the given resource ([resource]/run)
+    query: {},                                              // query parameters to provide with all GET requests
+    methods: {                                              // overrides default HTTP methods used for each CRUD action
+      create: 'post',
+      find: 'get',
+      update: 'put',
+      destroy: 'del'
+    },
+    beforeFormatResult: function(result){return result},    // alter result prior to formatting
+    afterFormatResult: function(result){return result},     // alter result after formatting
+    beforeFormatResults: function(results){return results}, // alter results prior to formatting
+    afterFormatResults: function(results){return results},  // alter results after formatting
+    cache: {                                                // optional cache engine
+      engine : require('someCacheEngine')                   // see Caching below
     }
   }
 
