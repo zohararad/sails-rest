@@ -24,7 +24,7 @@ module.exports = (function(){
     var config = collections[collectionName].config;
 
     if (_.isFunction(config.beforeFormatResult)) {
-      config.beforeFormatResult(result);
+      result = config.beforeFormatResult(result);
     }
 
     _.each(collections[collectionName].definition, function(def, key) {
@@ -34,7 +34,7 @@ module.exports = (function(){
     });
 
     if (_.isFunction(config.afterFormatResult)) {
-      config.afterFormatResult(result);
+      result = config.afterFormatResult(result);
     }
 
     return result;
@@ -50,7 +50,7 @@ module.exports = (function(){
     var config = collections[collectionName].config;
 
     if (_.isFunction(config.beforeFormatResults)) {
-      config.beforeFormatResults(results);
+      results = config.beforeFormatResults(results);
     }
 
     results.forEach(function(result) {
@@ -58,7 +58,7 @@ module.exports = (function(){
     });
 
     if (_.isFunction(config.afterFormatResults)) {
-      config.afterFormatResults(results);
+      results = config.afterFormatResults(results);
     }
 
     return results;
