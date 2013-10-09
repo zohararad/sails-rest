@@ -79,10 +79,6 @@ module.exports = cache;
 
   rest: {
     module   : 'sails-rest',
-    hostname : 'api.somewhere.io', // api hostname
-    port     : 80,                 // api port
-    protocol : 'http',             // HTTP protocol (http | https)
-    pathname : '/api/v1'           // base api path
     cache    : {
       engine : require('./cache')
     }
