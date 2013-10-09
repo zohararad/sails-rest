@@ -23,8 +23,8 @@ module.exports = (function(){
   function formatResult(result, collectionName){
     var config = collections[collectionName].config;
 
-    if (_.isFunction(config.beforeFormat)) {
-      config.beforeFormat(result);
+    if (_.isFunction(config.beforeFormatResult)) {
+      config.beforeFormatResult(result);
     }
 
     _.each(collections[collectionName].definition, function(def, key) {
@@ -33,8 +33,8 @@ module.exports = (function(){
       }
     });
 
-    if (_.isFunction(config.afterFormat)) {
-      config.afterFormat(result);
+    if (_.isFunction(config.afterFormatResult)) {
+      config.afterFormatResult(result);
     }
 
     return result;
@@ -47,9 +47,19 @@ module.exports = (function(){
    * @returns {*}
    */
   function formatResults(results, collectionName){
+    var config = collections[collectionName].config;
+
+    if (_.isFunction(config.beforeFormatResults)) {
+      config.beforeFormatResults(results);
+    }
+
     results.forEach(function(result) {
       formatResult(result, collectionName);
     });
+
+    if (_.isFunction(config.afterFormatResults)) {
+      config.afterFormatResults(results);
+    }
 
     return results;
   }
@@ -210,8 +220,10 @@ module.exports = (function(){
         update: 'put',
         destroy: 'del'
       },
-      beforeFormat: null,
-      afterFormat: null
+      beforeFormatResult: null,
+      afterFormatResult: null,
+      beforeFormatResults: null,
+      afterFormatResults: null
     },
 
     registerCollection: function(collection, cb) {
@@ -232,8 +244,10 @@ module.exports = (function(){
           resource: c.resource || collection.identity,
           action: c.action,
           methods: _.extend({}, collection.defaults.methods, c.methods),
-          beforeFormat: c.beforeFormat,
-          afterFormat: c.afterFormat
+          beforeFormatResult: c.beforeFormatResult,
+          afterFormatResult: c.afterFormatResult,
+          beforeFormatResults: c.beforeFormatResults,
+          afterFormatResults: c.afterFormatResults
         },
 
         connection: restify[clientMethod]({
