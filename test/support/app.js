@@ -4,38 +4,98 @@ var express = require('express'),
     _ = require('lodash');
 
 var Models = {},
-    id = 1;
+    ids = {};
 
 app.use(express.bodyParser({}));
 
 app.get('/api/v1/:collection', function(req, res){
-  res.json(_.values(Models));
+  var collection = req.params.collection,
+      id = parseInt(req.params.id, 10),
+      query = _.isEmpty(req.query) ? null : req.query,
+      r = [];
+
+  if (!_.isEmpty(query)) {
+    _.each(query, function(param, key) {
+      query[key] = decodeURIComponent(param);
+    });
+  }
+
+  if (Models[collection]) {
+    r = _.filter(Models[collection], query);
+  }
+
+  res.json(r);
 });
 
 app.get('/api/v1/:collection/:id', function(req, res){
-  res.json(Models[params.id]);
+  var collection = req.params.collection,
+      id = parseInt(req.params.id, 10),
+      query = {id: id},
+      r = {};
+
+  if (Models[collection]) {
+    r = _.find(Models[collection], query);
+  }
+
+  res.json(r);
 });
 
 app.post('/api/v1/:collection', function(req, res){
-  Model = req.body;
-  Model.id = id;
-  Model.createdAt = Model.updatedAt = new Date();
-  id += 1;
-  Models[id.toString()] = Model;
-  res.json(Model);
+  var collection = req.params.collection,
+      r = {};
+
+  if (!Models[collection]) {
+    Models[collection] = [];
+    ids[collection] = 0;
+  }
+
+  Model = Models[collection];
+
+  ids[collection]++;
+
+  id = ids[collection];
+
+  r = _.cloneDeep(req.body);
+  r.id = id;
+  r.createdAt = r.updatedAt = new Date();
+
+  Model.push(r);
+
+  res.json(r);
 });
 
 app.put('/api/v1/:collection/:id', function(req, res){
-  Model = Models[params.id];
-  Model = _.extend(Model, req.body);
-  Model.updatedAt = new Date();
-  res.json(Model);
+  var collection = req.params.collection,
+      id = parseInt(req.params.id, 10),
+      query = {id: id},
+      r = {};
+
+  if (Models[collection]) {
+    r = _.find(Models[collection], query);
+
+    _.extend(r, req.body, {updatedAt: new Date()});
+  }
+
+  res.json(r);
 });
 
 app.delete('/api/v1/:collection/:id', function(req, res){
-  Model = Models[params.id];
-  delete Models[params.id];
-  res.json(Model);
+  var collection = req.params.collection,
+      id = parseInt(req.params.id, 10),
+      query = {id: id},
+      r = {};
+
+  if (Models[collection]) {
+    r = _.find(Models[collection], query);
+
+    var index = _.indexOf(Models[collection], r);
+
+    if (index > -1) {
+      Models[collection].splice(index, 1);
+    }
+  }
+
+  res.json(r);
 });
 
 module.exports = app;
