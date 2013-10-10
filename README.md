@@ -94,4 +94,57 @@ At the moment, cache busting is done by exact key only. This means that if you f
 
 * Improve cache busting
 * Add support for async cache engines (eg. redis_client)
-* Some create tests currently fail
+
+## Change Log
+
+### v0.0.3
+
+* Fixing issue where only a single set of connection settings were stored, not separate settings for each model.
+* Updating restler dependency to latest version.
+* Adhering to JSHint object dot notation reccomendation.
+* Making cache configurable per collection.
+* Reworking how requests are made. Now using a single method for making the request. Also allowing for specification of the method for each type of request and allowing overrides/defaults for resource action and query in the url.
+* Fixing error handling conditional.
+* Fixing issue with cloning of connection.
+* Fixing improper methodName and restMethod.
+* Allowing for destroying all items in collection as well as by query, instead of only id.
+* Expanding test application to better suit suite of Waterline tests.
+* Reworking result formatting.
+* Referencing GitHub repo for reslter due to bugs that cause errors with tests.
+* Decoding URL compontents for test support application.
+* Absstracting logic to allow for deletion and updates of multiple items.
+* Removing unused variable.
+* Converting REST client from "restler" to "restify" due to bugs with restler module.
+* Adding method to modify result before and after format and fixing formatResults method.
+* Allowing for formatting before and after both individual results and all results.
+* Expecting return value for result formatting functions.
+* Modifying README to reflect new config options.
+* Modifying README formatting to allow for better legibility on GitHub page.
+* Removing redundant config.
+
+## Contributors
+
+[Christopher M. Mitchell](https://github.com/divThis)
+
+## MIT License
+
+Copyright (c) 2013 Zohar Arad
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
