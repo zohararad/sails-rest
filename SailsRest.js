@@ -3,10 +3,10 @@
   -> adapter
 ---------------------------------------------------------------*/
 
-var async = require('async'),
+var async   = require('async'),
     restify = require('restify'),
-    url = require('url'),
-    _   = require('lodash');
+    url     = require('url'),
+    _       = require('lodash');
 
 module.exports = (function(){
   "use strict";
@@ -150,7 +150,7 @@ module.exports = (function(){
     // Format URI
     var uri = url.format(config);
 
-    // Retrieve data from the cache 
+    // Retrieve data from the cache
     if (methodName === 'find') {
       r = cache && cache.engine.get(uri);
     }
@@ -175,7 +175,7 @@ module.exports = (function(){
           }
           else {
             r = formatResult(obj, collectionName);
-        
+
             if (cache) {
               cache.engine.del(uri);
             }
@@ -227,43 +227,52 @@ module.exports = (function(){
     },
 
     registerCollection: function(collection, cb) {
-      var c = _.extend({}, collection.defaults, collection.config),
-          clientMethod = 'create' + c.type.substr(0, 1).toUpperCase() + c.type.substr(1).toLowerCase() + 'Client';
+      var config, clientMethod, instance;
+
+      config       = _.extend({}, collection.defaults, collection.config);
+      clientMethod = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
 
       if (!_.isFunction(restify[clientMethod])) {
         throw new Error('Invalid type provided');
       }
 
-      collections[collection.identity] = {
+      instance = {
         config: {
-          protocol: c.protocol,
-          hostname: c.host,
-          port: c.port,
-          pathname: c.pathname,
-          query: c.query,
-          resource: c.resource || collection.identity,
-          action: c.action,
-          methods: _.extend({}, collection.defaults.methods, c.methods),
-          beforeFormatResult: c.beforeFormatResult,
-          afterFormatResult: c.afterFormatResult,
-          beforeFormatResults: c.beforeFormatResults,
-          afterFormatResults: c.afterFormatResults
+          protocol: config.protocol,
+          hostname: config.host,
+          port: config.port,
+          pathname: config.pathname,
+          headers: config.headers,
+          query: config.query,
+          resource: config.resource || collection.identity,
+          action: config.action,
+          methods: _.extend({}, collection.defaults.methods, config.methods),
+          beforeFormatResult: config.beforeFormatResult,
+          afterFormatResult: config.afterFormatResult,
+          beforeFormatResults: config.beforeFormatResults,
+          afterFormatResults: config.afterFormatResults
         },
 
         connection: restify[clientMethod]({
           url: url.format({
-            protocol: c.protocol,
-            hostname: c.host,
-            port: c.port
+            protocol: config.protocol,
+            hostname: config.host,
+            port: config.port
           })
         }),
 
         definition: collection.definition
       };
 
-      if (collection.config.cache) {
-        collections[collection.identity].cache = collection.config.cache;
+      if (collection.config.basicAuth) {
+        instance.connection.basicAuth(config.basicAuth.username, config.basicAuth.password);
       }
+
+      if (collection.config.cache) {
+        instance.cache = collection.config.cache;
+      }
+
+      collections[collection.identity] = instance;
 
       cb();
     },
