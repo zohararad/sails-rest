@@ -20,9 +20,7 @@ module.exports = (function(){
    * @param collectionName name of collection the result object belongs to
    * @returns {*}
    */
-  function formatResult(result, collectionName){
-    var config = collections[collectionName].config;
-
+  function formatResult(result, collectionName, config){
     if (_.isFunction(config.beforeFormatResult)) {
       result = config.beforeFormatResult(result);
     }
@@ -46,15 +44,13 @@ module.exports = (function(){
    * @param collectionName name of collection the result object belongs to
    * @returns {*}
    */
-  function formatResults(results, collectionName){
-    var config = collections[collectionName].config;
-
+  function formatResults(results, collectionName, config){
     if (_.isFunction(config.beforeFormatResults)) {
       results = config.beforeFormatResults(results);
     }
 
     results.forEach(function(result) {
-      formatResult(result, collectionName);
+      formatResult(result, collectionName, config);
     });
 
     if (_.isFunction(config.afterFormatResults)) {
@@ -70,11 +66,11 @@ module.exports = (function(){
    * @param collectionName name of collection the result object belongs to
    * @returns {*}
    */
-  function getResultsAsCollection(data, collectionName){
+  function getResultsAsCollection(data, collectionName, config){
     var d = (data.objects || data.results || data),
         a = _.isArray(d) ? d : [d];
 
-    return formatResults(a, collectionName);
+    return formatResults(a, collectionName, config);
   }
 
   /**
@@ -92,8 +88,18 @@ module.exports = (function(){
         cache = collections[collectionName].cache,
         config = _.cloneDeep(collections[collectionName].config),
         connection = collections[collectionName].connection,
-        restMethod = config.methods[methodName],
-        pathname = config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
+        restMethod = config.methods[methodName];
+
+    // Override config settings from options if available
+    if (options && _.isPlainObject(options)) {
+      _.each(config, function(val, key) {
+        if (_.has(options, key)) {
+          config[key] = options[key];
+        }
+      });
+    }
+
+    var pathname = config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
 
     if (options && options.where) {
       // Add id to pathname if provided
@@ -167,14 +173,14 @@ module.exports = (function(){
         }
         else {
           if (methodName === 'find') {
-            r = getResultsAsCollection(obj, collectionName);
+            r = getResultsAsCollection(obj, collectionName, config);
 
             if (cache) {
               cache.engine.set(uri, r);
             }
           }
           else {
-            r = formatResult(obj, collectionName);
+            r = formatResult(obj, collectionName, config);
 
             if (cache) {
               cache.engine.del(uri);
