@@ -235,7 +235,7 @@ module.exports = (function(){
     registerCollection: function(collection, cb) {
       var config, clientMethod, instance;
 
-      config       = _.extend({}, collection.defaults, collection.config);
+      config       = collection.defaults ? _.extend({}, collection.defaults, collection.config) : collection.config;
       clientMethod = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
 
       if (!_.isFunction(restify[clientMethod])) {
@@ -252,7 +252,7 @@ module.exports = (function(){
           query: config.query,
           resource: config.resource || collection.identity,
           action: config.action,
-          methods: _.extend({}, collection.defaults.methods, config.methods),
+          methods: collection.defaults ? _.extend({}, collection.defaults.methods, config.methods) : config.methods,
           beforeFormatResult: config.beforeFormatResult,
           afterFormatResult: config.afterFormatResult,
           beforeFormatResults: config.beforeFormatResults,
