@@ -6,7 +6,8 @@
 var async   = require('async'),
     restify = require('restify'),
     url     = require('url'),
-    _       = require('lodash');
+    _       = require('lodash'),
+    util    = require('util');
 
 module.exports = (function(){
   "use strict";
@@ -168,8 +169,11 @@ module.exports = (function(){
       var path = uri.replace(connection.url.href, '/');
 
       var callback = function(err, req, res, obj) {
-        if (err) {
+        if (err && res.statusCode !== 404) {
           cb(err);
+        }
+        else if (err && res.statusCode === 404) { 
+          cb(null, []);
         }
         else {
           if (methodName === 'find') {
