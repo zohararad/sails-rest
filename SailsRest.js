@@ -6,8 +6,7 @@
 var async   = require('async'),
     restify = require('restify'),
     url     = require('url'),
-    _       = require('lodash'),
-    util    = require('util');
+    _       = require('lodash');
 
 module.exports = (function(){
   "use strict";
