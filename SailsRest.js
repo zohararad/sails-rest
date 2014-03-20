@@ -168,7 +168,7 @@ module.exports = (function(){
       var path = uri.replace(connection.url.href, '/');
 
       var callback = function(err, req, res, obj) {
-        if (err && res.statusCode !== 404) {
+        if (err && (typeof res === 'undefined' || res === null || res.statusCode !== 404)) {
           cb(err);
         }
         else if (err && res.statusCode === 404) { 
