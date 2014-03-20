@@ -168,8 +168,11 @@ module.exports = (function(){
       var path = uri.replace(connection.url.href, '/');
 
       var callback = function(err, req, res, obj) {
-        if (err) {
+        if (err && res.statusCode !== 404) {
           cb(err);
+        }
+        else if (err && res.statusCode === 404) { 
+          cb(null, []);
         }
         else {
           if (methodName === 'find') {
