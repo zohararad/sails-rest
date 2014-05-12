@@ -11,7 +11,7 @@ var async   = require('async'),
 module.exports = (function(){
   "use strict";
 
-  var collections = {};
+  var connections = {};
 
   // Private functions
   /**
@@ -25,7 +25,7 @@ module.exports = (function(){
       result = config.beforeFormatResult(result);
     }
 
-    _.each(collections[collectionName].definition, function(def, key) {
+    _.each(connections[collectionName].definition, function(def, key) {
       if (def.type.match(/date/i)) {
         result[key] = new Date(result[key] ? result[key] : null);
       }
@@ -83,12 +83,13 @@ module.exports = (function(){
    * @returns {*}
    */
   function makeRequest(collectionName, methodName, cb, options, values) {
-    var r = null,
-        opt = null,
-        cache = collections[collectionName].cache,
-        config = _.cloneDeep(collections[collectionName].config),
-        connection = collections[collectionName].connection,
-        restMethod = config.methods[methodName];
+    var r          = null,
+        opt        = null,
+        cache      = connections[collectionName].cache,
+        config     = _.cloneDeep(connections[collectionName].config),
+        connection = connections[collectionName].connection,
+        restMethod = config.methods[methodName],
+        pathname;
 
     // Override config settings from options if available
     if (options && _.isPlainObject(options)) {
@@ -99,7 +100,7 @@ module.exports = (function(){
       });
     }
 
-    var pathname = config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
+    pathname = config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
 
     if (options && options.where) {
       // Add id to pathname if provided
@@ -171,7 +172,7 @@ module.exports = (function(){
         if (err && (typeof res === 'undefined' || res === null || res.statusCode !== 404)) {
           cb(err);
         }
-        else if (err && res.statusCode === 404) { 
+        else if (err && res.statusCode === 404) {
           cb(null, []);
         }
         else {
@@ -235,11 +236,11 @@ module.exports = (function(){
       afterFormatResults: null
     },
 
-    registerCollection: function(collection, cb) {
+    registerConnection: function (connection, collections, cb) {
       var config, clientMethod, instance;
 
-      config       = collection.defaults ? _.extend({}, collection.defaults, collection.config) : collection.config;
-      clientMethod = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
+      config       = connection.defaults ? _.extend({}, connection.defaults, connection.config) : connection.config;
+      clientMethod = 'create' + connection.type.substr(0, 1).toUpperCase() + connection.type.substr(1).toLowerCase() + 'Client';
 
       if (!_.isFunction(restify[clientMethod])) {
         throw new Error('Invalid type provided');
@@ -251,11 +252,10 @@ module.exports = (function(){
           hostname: config.host,
           port: config.port,
           pathname: config.pathname,
-          headers: config.headers,
           query: config.query,
-          resource: config.resource || collection.identity,
+          resource: config.resource || config.identity,
           action: config.action,
-          methods: collection.defaults ? _.extend({}, collection.defaults.methods, config.methods) : config.methods,
+          methods: connction.defaults ? _.extend({}, connction.defaults.methods, config.methods) : config.methods,
           beforeFormatResult: config.beforeFormatResult,
           afterFormatResult: config.afterFormatResult,
           beforeFormatResults: config.beforeFormatResults,
@@ -268,46 +268,49 @@ module.exports = (function(){
             hostname: config.host,
             port: config.port
           })
-        }),
-
-        definition: collection.definition
+        })
       };
 
-      if (collection.config.basicAuth) {
+      if (connection.config.basicAuth) {
         instance.connection.basicAuth(config.basicAuth.username, config.basicAuth.password);
       }
 
-      if (collection.config.cache) {
-        instance.cache = collection.config.cache;
+      if (connection.config.cache) {
+        instance.cache = connection.config.cache;
       }
 
-      collections[collection.identity] = instance;
+      collections[connction.identity] = instance;
 
       cb();
     },
 
-    create: function(collectionName, values, cb) {
+    create: function(connection, collectionName, values, cb) {
       makeRequest(collectionName, 'create', cb, null, values);
     },
 
-    find: function(collectionName, options, cb){
+    find: function(connection, collectionName, options, cb){
       makeRequest(collectionName, 'find', cb, options);
     },
 
-    update: function(collectionName, options, values, cb) {
+    update: function(connection, collectionName, options, values, cb) {
       makeRequest(collectionName, 'update', cb, options, values);
     },
 
-    destroy: function(collectionName, options, cb) {
+    destroy: function(connection, collectionName, options, cb) {
       makeRequest(collectionName, 'destroy', cb, options);
     },
 
-    drop: function(collectionName, cb) {
+    drop: function(connection, collectionName, cb) {
+      cb();
+    },
+
+    define: function(connection, collectionName, definition, cb) {
+      connections[collectionName].definition = definition;
       cb();
     },
 
     describe: function(collectionName, cb) {
-      cb(null, collections[collectionName].definition);
+      cb(null, connections[collectionName].definition);
     }
   };
 
