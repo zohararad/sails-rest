@@ -3,7 +3,8 @@
   -> adapter
 ---------------------------------------------------------------*/
 
-var async   = require('async'),
+var Errors  = require('waterline-errors').adapter,
+    async   = require('async'),
     restify = require('restify'),
     url     = require('url'),
     _       = require('lodash');
@@ -18,14 +19,16 @@ module.exports = (function(){
    * Format result object according to schema
    * @param result result object
    * @param collectionName name of collection the result object belongs to
+   * @param config object representing the connection configuration
+   * @param definition object representing the collection definition
    * @returns {*}
    */
-  function formatResult(result, collectionName, config){
+  function formatResult(result, collectionName, config, definition){
     if (_.isFunction(config.beforeFormatResult)) {
       result = config.beforeFormatResult(result);
     }
 
-    _.each(connections[collectionName].definition, function(def, key) {
+    _.each(definition, function(def, key) {
       if (def.type.match(/date/i)) {
         result[key] = new Date(result[key] ? result[key] : null);
       }
@@ -42,15 +45,17 @@ module.exports = (function(){
    * Format results according to schema
    * @param results array of result objects (model instances)
    * @param collectionName name of collection the result object belongs to
+   * @param config object representing the connection configuration
+   * @param definition object representing the collection definition
    * @returns {*}
    */
-  function formatResults(results, collectionName, config){
+  function formatResults(results, collectionName, config, definition){
     if (_.isFunction(config.beforeFormatResults)) {
       results = config.beforeFormatResults(results);
     }
 
     results.forEach(function(result) {
-      formatResult(result, collectionName, config);
+      formatResult(result, collectionName, config, definition);
     });
 
     if (_.isFunction(config.afterFormatResults)) {
@@ -64,17 +69,20 @@ module.exports = (function(){
    * Ensure results are contained in an array. Resolves variants in API responses such as `results` or `objects` instead of `[.....]`
    * @param data response data to format as results array
    * @param collectionName name of collection the result object belongs to
+   * @param config object representing the connection configuration
+   * @param definition object representing the collection definition
    * @returns {*}
    */
-  function getResultsAsCollection(data, collectionName, config){
+  function getResultsAsCollection(data, collectionName, config, definition){
     var d = (data.objects || data.results || data),
         a = _.isArray(d) ? d : [d];
 
-    return formatResults(a, collectionName, config);
+    return formatResults(a, collectionName, config, definition);
   }
 
   /**
    * Makes a REST request via restify
+   * @param identity type of connection interface
    * @param collectionName name of collection the result object belongs to
    * @param methodName name of CRUD method being used
    * @param cb callback from method
@@ -82,12 +90,13 @@ module.exports = (function(){
    * @param values values from method
    * @returns {*}
    */
-  function makeRequest(collectionName, methodName, cb, options, values) {
+  function makeRequest(identity, collectionName, methodName, cb, options, values) {
     var r          = null,
         opt        = null,
-        cache      = connections[collectionName].cache,
-        config     = _.cloneDeep(connections[collectionName].config),
-        connection = connections[collectionName].connection,
+        cache      = connections[identity].cache,
+        config     = _.cloneDeep(connections[identity].config),
+        connection = connections[identity].connection,
+        definition = connections[identity].definition,
         restMethod = config.methods[methodName],
         pathname;
 
@@ -110,7 +119,7 @@ module.exports = (function(){
       }
       else if (methodName === 'destroy' || methodName == 'update') {
         // Find all and make new request for each.
-        makeRequest(collectionName, 'find', function(error, results) {
+        makeRequest(identity, collectionName, 'find', function(error, results) {
           if (error) {
             cb(error);
           }
@@ -122,7 +131,7 @@ module.exports = (function(){
                 }
               };
 
-              makeRequest(collectionName, methodName, (i + 1) === results.length ? cb : function(){}, options, values);
+              makeRequest(identity, collectionName, methodName, (i + 1) === results.length ? cb : function(){}, options, values);
             });
           }
         }, options);
@@ -177,14 +186,14 @@ module.exports = (function(){
         }
         else {
           if (methodName === 'find') {
-            r = getResultsAsCollection(obj, collectionName, config);
+            r = getResultsAsCollection(obj, collectionName, config, definition);
 
             if (cache) {
               cache.engine.set(uri, r);
             }
           }
           else {
-            r = formatResult(obj, collectionName, config);
+            r = formatResult(obj, collectionName, config, definition);
 
             if (cache) {
               cache.engine.del(uri);
@@ -237,6 +246,9 @@ module.exports = (function(){
     },
 
     registerConnection: function (connection, collections, cb) {
+      if(!connection.identity) return cb(Errors.IdentityMissing);
+      if(connections[connection.identity]) return cb(Errors.IdentityDuplicate);
+
       var config, clientMethod, instance;
 
       config       = connection.defaults ? _.extend({}, connection.defaults, connection.config) : connection.config;
@@ -285,32 +297,32 @@ module.exports = (function(){
     },
 
     create: function(connection, collectionName, values, cb) {
-      makeRequest(collectionName, 'create', cb, null, values);
+      makeRequest(connection, collectionName, 'create', cb, null, values);
     },
 
     find: function(connection, collectionName, options, cb){
-      makeRequest(collectionName, 'find', cb, options);
+      makeRequest(connection, collectionName, 'find', cb, options);
     },
 
     update: function(connection, collectionName, options, values, cb) {
-      makeRequest(collectionName, 'update', cb, options, values);
+      makeRequest(connection, collectionName, 'update', cb, options, values);
     },
 
     destroy: function(connection, collectionName, options, cb) {
-      makeRequest(collectionName, 'destroy', cb, options);
+      makeRequest(connection, collectionName, 'destroy', cb, options);
     },
 
-    drop: function(connection, collectionName, cb) {
+    drop: function(connection, collectionName, relations, cb) {
       cb();
     },
 
     define: function(connection, collectionName, definition, cb) {
-      connections[collectionName].definition = definition;
+      connections[connection].definition = definition;
       cb();
     },
 
-    describe: function(collectionName, cb) {
-      cb(null, connections[collectionName].definition);
+    describe: function(connection, collectionName, cb) {
+      cb(null, connections[connection].definition);
     }
   };
 
