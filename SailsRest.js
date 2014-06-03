@@ -251,29 +251,16 @@ module.exports = (function(){
 
       var config, clientMethod, instance;
 
-      config       = connection.defaults ? _.extend({}, connection.defaults, connection.config) : connection.config;
-      clientMethod = 'create' + connection.type.substr(0, 1).toUpperCase() + connection.type.substr(1).toLowerCase() + 'Client';
+      config         = this.defaults ? _.extend({}, this.defaults, connection) : connection;
+      config.methods = this.defaults ? _.extend({}, this.defaults.methods, connection.methods) : connection.methods;
+      clientMethod   = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
 
       if (!_.isFunction(restify[clientMethod])) {
         throw new Error('Invalid type provided');
       }
 
       instance = {
-        config: {
-          protocol: config.protocol,
-          hostname: config.host,
-          port: config.port,
-          pathname: config.pathname,
-          query: config.query,
-          resource: config.resource || config.identity,
-          action: config.action,
-          methods: connction.defaults ? _.extend({}, connction.defaults.methods, config.methods) : config.methods,
-          beforeFormatResult: config.beforeFormatResult,
-          afterFormatResult: config.afterFormatResult,
-          beforeFormatResults: config.beforeFormatResults,
-          afterFormatResults: config.afterFormatResults
-        },
-
+        config: config,
         connection: restify[clientMethod]({
           url: url.format({
             protocol: config.protocol,
@@ -283,15 +270,15 @@ module.exports = (function(){
         })
       };
 
-      if (connection.config.basicAuth) {
+      if (config.basicAuth) {
         instance.connection.basicAuth(config.basicAuth.username, config.basicAuth.password);
       }
 
-      if (connection.config.cache) {
-        instance.cache = connection.config.cache;
+      if (config.cache) {
+        instance.cache = config.cache;
       }
 
-      collections[connction.identity] = instance;
+      connections[connection.identity] = instance;
 
       cb();
     },
