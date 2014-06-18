@@ -3,13 +3,13 @@
   -> adapter
 ---------------------------------------------------------------*/
 
-var Errors  = require('waterline-errors').adapter,
-    async   = require('async'),
-    restify = require('restify'),
-    url     = require('url'),
-    _       = require('lodash');
+var Errors = require('waterline-errors').adapter,
+  async = require('async'),
+  restify = require('restify'),
+  url = require('url'),
+  _ = require('lodash');
 
-module.exports = (function(){
+module.exports = (function() {
   "use strict";
 
   var connections = {};
@@ -23,7 +23,7 @@ module.exports = (function(){
    * @param definition object representing the collection definition
    * @returns {*}
    */
-  function formatResult(result, collectionName, config, definition){
+  function formatResult(result, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResult)) {
       result = config.beforeFormatResult(result);
     }
@@ -49,7 +49,7 @@ module.exports = (function(){
    * @param definition object representing the collection definition
    * @returns {*}
    */
-  function formatResults(results, collectionName, config, definition){
+  function formatResults(results, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResults)) {
       results = config.beforeFormatResults(results);
     }
@@ -73,9 +73,9 @@ module.exports = (function(){
    * @param definition object representing the collection definition
    * @returns {*}
    */
-  function getResultsAsCollection(data, collectionName, config, definition){
+  function getResultsAsCollection(data, collectionName, config, definition) {
     var d = (data.objects || data.results || data),
-        a = _.isArray(d) ? d : [d];
+      a = _.isArray(d) ? d : [d];
 
     return formatResults(a, collectionName, config, definition);
   }
@@ -91,14 +91,14 @@ module.exports = (function(){
    * @returns {*}
    */
   function makeRequest(identity, collectionName, methodName, cb, options, values) {
-    var r          = null,
-        opt        = null,
-        cache      = connections[identity].cache,
-        config     = _.cloneDeep(connections[identity].config),
-        connection = connections[identity].connection,
-        definition = connections[identity].definition,
-        restMethod = config.methods[methodName],
-        pathname;
+    var r = null,
+      opt = null,
+      cache = connections[identity].cache,
+      config = _.cloneDeep(connections[identity].config),
+      connection = connections[identity].connection,
+      definition = connections[identity].definition,
+      restMethod = config.methods[methodName],
+      pathname;
 
     // Override config settings from options if available
     if (options && _.isPlainObject(options)) {
@@ -114,16 +114,14 @@ module.exports = (function(){
     if (options && options.where) {
       // Add id to pathname if provided
       if (options.where.id) {
-        pathname += '/'+ options.where.id;
+        pathname += '/' + options.where.id;
         delete options.where.id;
-      }
-      else if (methodName === 'destroy' || methodName == 'update') {
+      } else if (methodName === 'destroy' || methodName == 'update') {
         // Find all and make new request for each.
         makeRequest(identity, collectionName, 'find', function(error, results) {
           if (error) {
             cb(error);
-          }
-          else {
+          } else {
             _.each(results, function(result, i) {
               options = {
                 where: {
@@ -131,7 +129,7 @@ module.exports = (function(){
                 }
               };
 
-              makeRequest(identity, collectionName, methodName, (i + 1) === results.length ? cb : function(){}, options, values);
+              makeRequest(identity, collectionName, methodName, (i + 1) === results.length ? cb : function() {}, options, values);
             });
           }
         }, options);
@@ -142,12 +140,15 @@ module.exports = (function(){
       // Add where statement as query parameters if requesting via GET
       if (restMethod === 'get') {
         _.extend(config.query, options.where);
+        _.extend(config.query, {
+          limit: options.limit,
+          offset: options.skip
+        });
       }
       // Set opt if additional where statements are available
       else if (_.size(options.where)) {
         opt = options.where;
-      }
-      else {
+      } else {
         delete options.where;
       }
     }
@@ -161,7 +162,9 @@ module.exports = (function(){
     }
 
     // Add pathname to connection
-    _.extend(config, {pathname: pathname});
+    _.extend(config, {
+      pathname: pathname
+    });
 
     // Format URI
     var uri = url.format(config);
@@ -173,26 +176,22 @@ module.exports = (function(){
 
     if (r) {
       cb(null, r);
-    }
-    else if (_.isFunction(connection[restMethod])) {
+    } else if (_.isFunction(connection[restMethod])) {
       var path = uri.replace(connection.url.href, '/');
 
       var callback = function(err, req, res, obj) {
         if (err && (typeof res === 'undefined' || res === null || res.statusCode !== 404)) {
           cb(err);
-        }
-        else if (err && res.statusCode === 404) {
+        } else if (err && res.statusCode === 404) {
           cb(null, []);
-        }
-        else {
+        } else {
           if (methodName === 'find') {
             r = getResultsAsCollection(obj, collectionName, config, definition);
 
             if (cache) {
               cache.engine.set(uri, r);
             }
-          }
-          else {
+          } else {
             r = formatResult(obj, collectionName, config, definition);
 
             if (cache) {
@@ -207,12 +206,10 @@ module.exports = (function(){
       // Make request via restify
       if (opt) {
         connection[restMethod](path, opt, callback);
-      }
-      else {
+      } else {
         connection[restMethod](path, callback);
       }
-    }
-    else {
+    } else {
       cb(new Error('Invalid REST method: ' + restMethod));
     }
 
@@ -245,15 +242,15 @@ module.exports = (function(){
       afterFormatResults: null
     },
 
-    registerConnection: function (connection, collections, cb) {
-      if(!connection.identity) return cb(Errors.IdentityMissing);
-      if(connections[connection.identity]) return cb(Errors.IdentityDuplicate);
+    registerConnection: function(connection, collections, cb) {
+      if (!connection.identity) return cb(Errors.IdentityMissing);
+      if (connections[connection.identity]) return cb(Errors.IdentityDuplicate);
 
       var config, clientMethod, instance;
 
-      config         = this.defaults ? _.extend({}, this.defaults, connection) : connection;
+      config = this.defaults ? _.extend({}, this.defaults, connection) : connection;
       config.methods = this.defaults ? _.extend({}, this.defaults.methods, connection.methods) : connection.methods;
-      clientMethod   = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
+      clientMethod = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
 
       if (!_.isFunction(restify[clientMethod])) {
         throw new Error('Invalid type provided');
@@ -288,7 +285,7 @@ module.exports = (function(){
       makeRequest(connection, collectionName, 'create', cb, null, values);
     },
 
-    find: function(connection, collectionName, options, cb){
+    find: function(connection, collectionName, options, cb) {
       makeRequest(connection, collectionName, 'find', cb, options);
     },
 
