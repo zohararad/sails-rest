@@ -139,10 +139,11 @@ module.exports = (function() {
 
       // Add where statement as query parameters if requesting via GET
       if (restMethod === 'get') {
-        _.extend(config.query, options.where);
-        _.extend(config.query, {
-          limit: options.limit,
-          offset: options.skip
+        _.extend(config.query, (options.where || {}));
+        ['skip', 'limit', 'offset'].forEach(function(key){
+          if(options[key] !== undefined){
+            config.query[key] = options[key];
+          }
         });
       }
       // Set opt if additional where statements are available
