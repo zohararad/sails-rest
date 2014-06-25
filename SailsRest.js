@@ -12,6 +12,15 @@ var Errors = require('waterline-errors').adapter,
 module.exports = (function() {
   "use strict";
 
+  // Rest Custom Error Object
+  function RestError(message, meta) {
+    this.name = "RestError";
+    this.message = message || "REST Error Message";
+    this.meta = meta || {};
+  }
+  RestError.prototype = new Error();
+  RestError.prototype.constructor = RestError;
+
   var connections = {};
 
   // Private functions
@@ -180,26 +189,26 @@ module.exports = (function() {
     } else if (_.isFunction(connection[restMethod])) {
       var path = uri.replace(connection.url.href, '/');
 
-      var callback = function(err, req, res, obj) {
-        if (err && (typeof res === 'undefined' || res === null || res.statusCode !== 404)) {
-          cb(err);
-        } else if (err && res.statusCode === 404) {
-          cb(null, []);
+      var callback = function(err, req, res, data) {
+        var restError,
+            // check if response code is in 4xx or 5xx range
+            responseErrorCode = res && /^(4|5)\d+$/.test(res.statusCode.toString());
+
+        if (err && ( res === undefined || res === null || responseErrorCode ) ) {
+          restError = new RestError(err.message, {req: req, res: res, data: data});
+          cb(restError);
         } else {
           if (methodName === 'find') {
-            r = getResultsAsCollection(obj, collectionName, config, definition);
-
+            r = getResultsAsCollection(data, collectionName, config, definition);
             if (cache) {
               cache.engine.set(uri, r);
             }
           } else {
-            r = formatResult(obj, collectionName, config, definition);
-
+            r = formatResult(data, collectionName, config, definition);
             if (cache) {
               cache.engine.del(uri);
             }
           }
-
           cb(null, r);
         }
       };
@@ -295,6 +304,7 @@ module.exports = (function() {
     },
 
     destroy: function(connection, collectionName, options, cb) {
+      console.log(options);
       makeRequest(connection, collectionName, 'destroy', cb, options);
     },
 
