@@ -90,6 +90,18 @@ module.exports = (function() {
   }
 
   /**
+   * Generate a pathname to use for a request
+   * @param config object representing the connection configuration
+   * @param restMethod string of the request method
+   * @param values object representing the data being send (if any)
+   * @param options object representing options passed from the calling method
+   * @returns {*}
+   */
+  function getPathname(config, restMethod, values, options){
+    return config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
+  }
+
+  /**
    * Makes a REST request via restify
    * @param identity type of connection interface
    * @param collectionName name of collection the result object belongs to
@@ -118,14 +130,14 @@ module.exports = (function() {
       });
     }
 
-    pathname = config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
+    pathname = config.getPathname(config, restMethod, values, options);
 
     if (options && options.where) {
-      // Add id to pathname if provided
       if (options.where.id) {
+        // Add id to pathname if provided
         pathname += '/' + options.where.id;
         delete options.where.id;
-      } else if (methodName === 'destroy' || methodName == 'update') {
+      } else if (methodName === 'destroy' || methodName === 'update') {
         // Find all and make new request for each.
         makeRequest(identity, collectionName, 'find', function(error, results) {
           if (error) {
@@ -246,6 +258,7 @@ module.exports = (function() {
         update: 'put',
         destroy: 'del'
       },
+      getPathname: getPathname,
       beforeFormatResult: null,
       afterFormatResult: null,
       beforeFormatResults: null,
@@ -304,7 +317,6 @@ module.exports = (function() {
     },
 
     destroy: function(connection, collectionName, options, cb) {
-      console.log(options);
       makeRequest(connection, collectionName, 'destroy', cb, options);
     },
 
