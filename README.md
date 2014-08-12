@@ -16,6 +16,10 @@ $ npm install sails-rest
 
 sails-rest is compatible with Sails.js v0.9.0 and above.
 
+For Sails.js v0.9 please use v0.0.3 version of sails-rest.
+ 
+For Sails.js v0.10 please use v0.0.4 version of sails-rest (or newer).
+
 ## Sails Configuration
 
 Add the following config to the config/adapters.js file:
