@@ -28,6 +28,7 @@
     "express": "3.x",
     "lodash": "1.2.1",
     "restify": "2.6.0",
+    "underscore.inflections": "^0.2.1",
     "waterline-errors": "^0.10.0"
   },
   "devDependencies": {
