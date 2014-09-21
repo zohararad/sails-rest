@@ -7,7 +7,8 @@ var Errors = require('waterline-errors').adapter,
   async = require('async'),
   restify = require('restify'),
   url = require('url'),
-  _ = require('lodash');
+  _ = require('lodash'),
+  inflections = require('underscore.inflections');
 
 module.exports = (function() {
   "use strict";
@@ -128,6 +129,12 @@ module.exports = (function() {
           config[key] = options[key];
         }
       });
+    }
+
+    // if resource name not set in config,
+    // try to get it from pluralized form of collectionName
+    if (!config.resource) {
+      config.resource = inflections.pluralize(collectionName);
     }
 
     pathname = config.getPathname(config, restMethod, values, options);
