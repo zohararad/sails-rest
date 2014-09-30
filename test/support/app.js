@@ -1,4 +1,6 @@
 var express = require('express'),
+    bodyParser = require('body-parser'),
+    multer = require('multer'),
     app = express(),
     sys = require('sys'),
     _ = require('lodash');
@@ -6,7 +8,9 @@ var express = require('express'),
 var Models = {},
     ids = {};
 
-app.use(express.bodyParser({}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(multer());
 
 app.get('/api/v1/:collection', function(req, res){
   var collection = req.params.collection,
