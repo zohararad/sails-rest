@@ -252,9 +252,9 @@ module.exports = (function() {
 
     defaults: {
       type: 'json',
-      host: 'localhost',
-      port: 80,
       protocol: 'http',
+      hostname: 'localhost',
+      port: 80,
       pathname: '',
       resource: null,
       action: null,
@@ -291,7 +291,8 @@ module.exports = (function() {
         connection: restify[clientMethod]({
           url: url.format({
             protocol: config.protocol,
-            hostname: config.host,
+            hostname: config.hostname,
+            host: config.host,
             port: config.port
           }),
           headers: config.headers

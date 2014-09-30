@@ -34,7 +34,7 @@ console.log();
 
 
 var config = {
-  host: 'localhost',
+  hostname: 'localhost',
   port: 3000,
   pathname: '/api/v1'
 };
