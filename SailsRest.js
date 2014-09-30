@@ -27,11 +27,11 @@ module.exports = (function() {
   // Private functions
   /**
    * Format result object according to schema
-   * @param result result object
-   * @param collectionName name of collection the result object belongs to
-   * @param config object representing the connection configuration
-   * @param definition object representing the collection definition
-   * @returns {*}
+   * @param {Object} result
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {Object} config - connection configuration
+   * @param {Object} definition - collection definition
+   * @returns {Object}
    */
   function formatResult(result, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResult)) {
@@ -53,11 +53,11 @@ module.exports = (function() {
 
   /**
    * Format results according to schema
-   * @param results array of result objects (model instances)
-   * @param collectionName name of collection the result object belongs to
-   * @param config object representing the connection configuration
-   * @param definition object representing the collection definition
-   * @returns {*}
+   * @param {Array} results - objects (model instances)
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {Object} config - connection configuration
+   * @param {Object} definition - collection definition
+   * @returns {Array}
    */
   function formatResults(results, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResults)) {
@@ -77,11 +77,11 @@ module.exports = (function() {
 
   /**
    * Ensure results are contained in an array. Resolves variants in API responses such as `results` or `objects` instead of `[.....]`
-   * @param data response data to format as results array
-   * @param collectionName name of collection the result object belongs to
-   * @param config object representing the connection configuration
-   * @param definition object representing the collection definition
-   * @returns {*}
+   * @param {Object|Array} data - response data to format as results array
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {Object} config - connection configuration
+   * @param {Object} definition - collection definition
+   * @returns {Object|Array}
    */
   function getResultsAsCollection(data, collectionName, config, definition) {
     var d = (data.objects || data.results || data),
@@ -92,25 +92,25 @@ module.exports = (function() {
 
   /**
    * Generate a pathname to use for a request
-   * @param config object representing the connection configuration
-   * @param restMethod string of the request method
-   * @param values object representing the data being send (if any)
-   * @param options object representing options passed from the calling method
-   * @returns {*}
+   * @param {Object} config - connection configuration
+   * @param {String} method - request method
+   * @param {Object} values - data being send (if any)
+   * @param {Object} options - options passed from the calling method
+   * @returns {Object}
    */
-  function getPathname(config, restMethod, values, options){
+  function getPathname(config, method, values, options){
     return config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
   }
 
   /**
    * Makes a REST request via restify
-   * @param identity type of connection interface
-   * @param collectionName name of collection the result object belongs to
-   * @param methodName name of CRUD method being used
-   * @param cb callback from method
-   * @param options options from method
-   * @param values values from method
-   * @returns {*}
+   * @param {String} identity - type of connection interface
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {String} methodName - name of CRUD method being used
+   * @param {Function} cb - callback from method
+   * @param {Object} options - options from method
+   * @param {Object|Array} [values] - values from method
+   * @returns {Boolean}
    */
   function makeRequest(identity, collectionName, methodName, cb, options, values) {
     var r = null,
@@ -162,7 +162,7 @@ module.exports = (function() {
           }
         }, options);
 
-        return;
+        return false;
       }
 
       // Add where statement as query parameters if requesting via GET
@@ -191,9 +191,7 @@ module.exports = (function() {
     }
 
     // Add pathname to connection
-    _.extend(config, {
-      pathname: pathname
-    });
+    config.pathname = pathname;
 
     // Format URI
     var uri = url.format(config);
