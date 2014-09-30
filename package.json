@@ -25,9 +25,10 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "async": "0.1.22",
-    "lodash": "1.2.1",
+    "lodash": "^2.4.1",
     "restify": "2.6.0",
     "underscore.inflections": "^0.2.1",
+    "underscore.string": "^2.3.3",
     "waterline-errors": "^0.10.0"
   },
   "devDependencies": {
