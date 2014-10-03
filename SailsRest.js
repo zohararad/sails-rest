@@ -8,7 +8,8 @@ var Errors = require('waterline-errors').adapter,
   restify = require('restify'),
   url = require('url'),
   _ = require('lodash'),
-  inflections = require('underscore.inflections');
+  _i = require('underscore.inflections'),
+  _s = require('underscore.string');
 
 module.exports = (function() {
   "use strict";
@@ -27,11 +28,11 @@ module.exports = (function() {
   // Private functions
   /**
    * Format result object according to schema
-   * @param result result object
-   * @param collectionName name of collection the result object belongs to
-   * @param config object representing the connection configuration
-   * @param definition object representing the collection definition
-   * @returns {*}
+   * @param {Object} result
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {Object} config - connection configuration
+   * @param {Object} definition - collection definition
+   * @returns {Object}
    */
   function formatResult(result, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResult)) {
@@ -53,11 +54,11 @@ module.exports = (function() {
 
   /**
    * Format results according to schema
-   * @param results array of result objects (model instances)
-   * @param collectionName name of collection the result object belongs to
-   * @param config object representing the connection configuration
-   * @param definition object representing the collection definition
-   * @returns {*}
+   * @param {Array} results - objects (model instances)
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {Object} config - connection configuration
+   * @param {Object} definition - collection definition
+   * @returns {Array}
    */
   function formatResults(results, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResults)) {
@@ -77,11 +78,11 @@ module.exports = (function() {
 
   /**
    * Ensure results are contained in an array. Resolves variants in API responses such as `results` or `objects` instead of `[.....]`
-   * @param data response data to format as results array
-   * @param collectionName name of collection the result object belongs to
-   * @param config object representing the connection configuration
-   * @param definition object representing the collection definition
-   * @returns {*}
+   * @param {Object|Array} data - response data to format as results array
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {Object} config - connection configuration
+   * @param {Object} definition - collection definition
+   * @returns {Object|Array}
    */
   function getResultsAsCollection(data, collectionName, config, definition) {
     var d = (data.objects || data.results || data),
@@ -92,27 +93,27 @@ module.exports = (function() {
 
   /**
    * Generate a pathname to use for a request
-   * @param config object representing the connection configuration
-   * @param restMethod string of the request method
-   * @param values object representing the data being send (if any)
-   * @param options object representing options passed from the calling method
-   * @returns {*}
+   * @param {Object} config - connection configuration
+   * @param {String} method - request method
+   * @param {Object} values - data being send (if any)
+   * @param {Object} options - options passed from the calling method
+   * @returns {Object}
    */
-  function getPathname(config, restMethod, values, options){
+  function getPathname(config, method, values, options){
     return config.pathname + '/' + config.resource + (config.action ? '/' + config.action : '');
   }
 
   /**
    * Makes a REST request via restify
-   * @param identity type of connection interface
-   * @param collectionName name of collection the result object belongs to
-   * @param methodName name of CRUD method being used
-   * @param cb callback from method
-   * @param options options from method
-   * @param values values from method
+   * @param {String} identity - type of connection interface
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {String} methodName - name of CRUD method being used
+   * @param {Function} callback - callback from method
+   * @param {Object} options - options from method
+   * @param {Object|Array} [values] - values from method
    * @returns {*}
    */
-  function makeRequest(identity, collectionName, methodName, cb, options, values) {
+  function makeRequest(identity, collectionName, methodName, callback, options, values) {
     var r = null,
       opt = null,
       cache = connections[identity].cache,
@@ -121,6 +122,12 @@ module.exports = (function() {
       definition = connections[identity].definition,
       restMethod = config.methods[methodName],
       pathname;
+
+    // Validate passed HTTP method
+    if (!_.isFunction(connection[restMethod])) {
+      callback(new Error('Invalid REST method: ' + restMethod));
+      return;
+    }
 
     // Override config settings from options if available
     if (options && _.isPlainObject(options)) {
@@ -134,7 +141,7 @@ module.exports = (function() {
     // if resource name not set in config,
     // try to get it from pluralized form of collectionName
     if (!config.resource) {
-      config.resource = inflections.pluralize(collectionName);
+      config.resource = _i.pluralize(collectionName);
     }
 
     pathname = config.getPathname(config, restMethod, values, options);
@@ -146,20 +153,19 @@ module.exports = (function() {
         delete options.where.id;
       } else if (methodName === 'destroy' || methodName === 'update') {
         // Find all and make new request for each.
-        makeRequest(identity, collectionName, 'find', function(error, results) {
-          if (error) {
-            cb(error);
-          } else {
-            _.each(results, function(result, i) {
+        makeRequest(identity, collectionName, 'find', function(err, results) {
+          if (err) return callback(err);
+
+          _.each(results, function(result, i) {
+            var cb = ((i + 1) === results.length) ? callback : _.noop,
               options = {
                 where: {
                   id: result.id
                 }
               };
 
-              makeRequest(identity, collectionName, methodName, (i + 1) === results.length ? cb : function() {}, options, values);
-            });
-          }
+            makeRequest(identity, collectionName, methodName, cb, options, values);
+          });
         }, options);
 
         return;
@@ -191,9 +197,7 @@ module.exports = (function() {
     }
 
     // Add pathname to connection
-    _.extend(config, {
-      pathname: pathname
-    });
+    config.pathname = pathname;
 
     // Format URI
     var uri = url.format(config);
@@ -204,18 +208,18 @@ module.exports = (function() {
     }
 
     if (r) {
-      cb(null, r);
+      callback(null, r);
     } else if (_.isFunction(connection[restMethod])) {
       var path = uri.replace(connection.url.href, '/');
 
-      var callback = function(err, req, res, data) {
+      var cb = function(err, req, res, data) {
         var restError,
             // check if response code is in 4xx or 5xx range
             responseErrorCode = res && /^(4|5)\d+$/.test(res.statusCode.toString());
 
         if (err && ( res === undefined || res === null || responseErrorCode ) ) {
           restError = new RestError(err.message, {req: req, res: res, data: data});
-          cb(restError);
+          callback(restError);
         } else {
           if (methodName === 'find') {
             r = getResultsAsCollection(data, collectionName, config, definition);
@@ -228,21 +232,17 @@ module.exports = (function() {
               cache.engine.del(uri);
             }
           }
-          cb(null, r);
+          callback(null, r);
         }
       };
 
       // Make request via restify
       if (opt) {
-        connection[restMethod](path, opt, callback);
+        connection[restMethod](path, opt, cb);
       } else {
-        connection[restMethod](path, callback);
+        connection[restMethod](path, cb);
       }
-    } else {
-      cb(new Error('Invalid REST method: ' + restMethod));
     }
-
-    return false;
   }
 
   // Adapter
@@ -252,9 +252,9 @@ module.exports = (function() {
 
     defaults: {
       type: 'json',
-      host: 'localhost',
-      port: 80,
       protocol: 'http',
+      hostname: 'localhost',
+      port: 80,
       pathname: '',
       resource: null,
       action: null,
@@ -280,10 +280,10 @@ module.exports = (function() {
 
       config = this.defaults ? _.extend({}, this.defaults, connection) : connection;
       config.methods = this.defaults ? _.extend({}, this.defaults.methods, connection.methods) : connection.methods;
-      clientMethod = 'create' + config.type.substr(0, 1).toUpperCase() + config.type.substr(1).toLowerCase() + 'Client';
+      clientMethod = _s.join('', 'create', _s.capitalize(config.type), 'Client');
 
       if (!_.isFunction(restify[clientMethod])) {
-        throw new Error('Invalid type provided');
+        throw new Error('Invalid type provided: ' + config.type);
       }
 
       instance = {
@@ -291,7 +291,8 @@ module.exports = (function() {
         connection: restify[clientMethod]({
           url: url.format({
             protocol: config.protocol,
-            hostname: config.host,
+            hostname: config.hostname,
+            host: config.host,
             port: config.port
           }),
           headers: config.headers

@@ -4,7 +4,7 @@
   "description": "REST adapter for Sails.js",
   "main": "SailsRest.js",
   "scripts": {
-    "test": "NODE_ENV=test node test/integration/runner.js"
+    "test": "node test/integration/runner -R spec -b"
   },
   "repository": {
     "type": "git",
@@ -25,15 +25,18 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "async": "0.1.22",
-    "express": "3.x",
-    "lodash": "1.2.1",
+    "lodash": "^2.4.1",
     "restify": "2.6.0",
     "underscore.inflections": "^0.2.1",
+    "underscore.string": "^2.3.3",
     "waterline-errors": "^0.10.0"
   },
   "devDependencies": {
-    "mocha": "^1.10.0",
+    "body-parser": "^1.9.0",
     "captains-log": "^0.11.8",
+    "express": "3.x",
+    "mocha": "^1.10.0",
+    "multer": "^0.1.4",
     "waterline-adapter-tests": "^0.10.0"
   },
   "waterlineAdapter": {
