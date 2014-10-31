@@ -255,6 +255,7 @@ module.exports = (function() {
       protocol: 'http',
       hostname: 'localhost',
       port: 80,
+      rejectUnauthorized: true,
       pathname: '',
       resource: null,
       action: null,
@@ -295,7 +296,8 @@ module.exports = (function() {
             host: config.host,
             port: config.port
           }),
-          headers: config.headers
+          headers: config.headers,
+          rejectUnauthorized: config.rejectUnauthorized
         })
       };
 
