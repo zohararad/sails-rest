@@ -218,8 +218,7 @@ module.exports = (function() {
             responseErrorCode = res && /^(4|5)\d+$/.test(res.statusCode.toString());
 
         if (err && ( res === undefined || res === null || responseErrorCode ) ) {
-          restError = new RestError(err.message, {req: req, res: res, data: data});
-          callback(restError);
+          callback(err);
         } else {
           if (methodName === 'find') {
             r = getResultsAsCollection(data, collectionName, config, definition);
