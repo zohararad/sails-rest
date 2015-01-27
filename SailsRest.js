@@ -218,7 +218,7 @@ module.exports = (function() {
             responseErrorCode = res && /^(4|5)\d+$/.test(res.statusCode.toString());
 
         if (err && ( res === undefined || res === null || responseErrorCode ) ) {
-          restError = new RestError(err.message, {req: req, res: res, data: data});
+          restError = new RestError(err.message, {originalError: err, data: data});
           callback(restError);
         } else {
           if (methodName === 'find') {
