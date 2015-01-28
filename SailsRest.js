@@ -4,7 +4,6 @@
 ---------------------------------------------------------------*/
 
 var Errors = require('waterline-errors').adapter,
-  async = require('async'),
   restify = require('restify'),
   url = require('url'),
   _ = require('lodash'),
