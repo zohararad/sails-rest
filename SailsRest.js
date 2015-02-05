@@ -112,25 +112,23 @@ module.exports = (function() {
    */
   function getQuery(config, collectionName, methodName, options){
 
-    var query;
-
     if (_.isFunction(config.query)) {
-      query = config.query(config, collectionName, methodName, options);
+      return config.query(config, collectionName, methodName, options);
     }
     else {
 
-      query = config.query;
+      var query = config.query;
 
       _.extend(query, (options.where || {}));
       ['skip', 'limit', 'offset'].forEach(function(key){
         if(options[key] !== undefined){
-          config.query[key] = options[key];
+          query[key] = options[key];
         }
       });
 
-    }
+      return query;
 
-    return query;
+    }
 
   }
 
