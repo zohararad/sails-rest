@@ -103,6 +103,38 @@ module.exports = (function() {
   }
 
   /**
+   * Generate the query string for GET requests
+   * @param {Object} config - connection configuration
+   * @param {String} collectionName - collection the result object belongs to
+   * @param {String} methodName - name of CRUD method being used
+   * @param {Object} options - options passed from the calling method
+   * @returns {Object}
+   */
+  function getQuery(config, collectionName, methodName, options){
+
+    var query;
+
+    if (_.isFunction(config.query)) {
+      query = config.query(config, collectionName, methodName, options);
+    }
+    else {
+
+      query = config.query;
+
+      _.extend(query, (options.where || {}));
+      ['skip', 'limit', 'offset'].forEach(function(key){
+        if(options[key] !== undefined){
+          config.query[key] = options[key];
+        }
+      });
+
+    }
+
+    return query;
+
+  }
+
+  /**
    * Makes a REST request via restify
    * @param {String} identity - type of connection interface
    * @param {String} collectionName - collection the result object belongs to
@@ -172,12 +204,7 @@ module.exports = (function() {
 
       // Add where statement as query parameters if requesting via GET
       if (restMethod === 'get') {
-        _.extend(config.query, (options.where || {}));
-        ['skip', 'limit', 'offset'].forEach(function(key){
-          if(options[key] !== undefined){
-            config.query[key] = options[key];
-          }
-        });
+        config.query = getQuery(config, collectionName, methodName, options);
       }
       // Set opt if additional where statements are available
       else if (_.size(options.where)) {
