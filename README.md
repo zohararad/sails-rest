@@ -36,7 +36,7 @@ module.exports.adapters = {
     port: 80,                 // api port
     protocol: 'http',         // HTTP protocol (http | https)
     rejectUnauthorized: true, // prevent https connections that use a self-signed certificate
-    pathname: '/api/v1'       // base api path
+    pathname: '/api/v1',      // base api path
     resource: null,           // resource path to use (overrides model name)
     action: null,             // action to use for the given resource ([resource]/run)
     query: {},                // query parameters to provide with all GET requests
