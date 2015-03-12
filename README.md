@@ -32,7 +32,7 @@ module.exports.adapters = {
   rest: {
     module: 'sails-rest',
     type: 'json',             // expected response type (json | string | http)
-    hostname: 'api.url.io',   // api host
+    host: 'api.url.io',   // api host
     port: 80,                 // api port
     protocol: 'http',         // HTTP protocol (http | https)
     rejectUnauthorized: true, // prevent https connections that use a self-signed certificate
