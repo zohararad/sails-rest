@@ -118,7 +118,10 @@ if you need to convert parameters sent to your backend.
 Example:
 
 By default, this adapter generates:
-    GET /api/users?where={name:'John'}&limit=10&skip=0
+
+```
+GET /api/users?where={name:'John'}&limit=10&skip=0
+```
 
 ```javascript
     ...
@@ -130,7 +133,7 @@ By default, this adapter generates:
 
         if ( options.limit ) newOptions.itemsPerPage = options.limit;
 
-        # dont forget to pass on skip because this function is responsible for generating all the parameters
+        // dont forget to pass on skip because this function is responsible for generating all the parameters
         newOptions.skip = options.skip;
 
         return newOptions;
@@ -140,7 +143,10 @@ By default, this adapter generates:
 ```
 
 This function will generate:
-    GET /api/users?name=John&itemsPerPage=10&skip=0
+
+```
+GET /api/users?name=John&itemsPerPage=10&skip=0
+```
 
 ## TODO
 
