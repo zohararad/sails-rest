@@ -134,7 +134,7 @@ By default, this adapter generates:
         newOptions.skip = options.skip;
 
         return newOptions;
-        
+
     },
     ...
 ```
@@ -153,7 +153,7 @@ This function will generate:
 
 * Fixing issue where only a single set of connection settings were stored, not separate settings for each model.
 * Updating restler dependency to latest version.
-* Adhering to JSHint object dot notation reccomendation.
+* Adhering to JSHint object dot notation recommendation.
 * Making cache configurable per collection.
 * Reworking how requests are made. Now using a single method for making the request. Also allowing for specification of the method for each type of request and allowing overrides/defaults for resource action and query in the url.
 * Fixing error handling conditional.
@@ -163,8 +163,8 @@ This function will generate:
 * Expanding test application to better suit suite of Waterline tests.
 * Reworking result formatting.
 * Referencing GitHub repo for reslter due to bugs that cause errors with tests.
-* Decoding URL compontents for test support application.
-* Absstracting logic to allow for deletion and updates of multiple items.
+* Decoding URL components for test support application.
+* Abstracting logic to allow for deletion and updates of multiple items.
 * Removing unused variable.
 * Converting REST client from "restler" to "restify" due to bugs with restler module.
 * Adding method to modify result before and after format and fixing formatResults method.
