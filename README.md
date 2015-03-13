@@ -46,10 +46,10 @@ module.exports.adapters = {
       update: 'put',
       destroy: 'del'
     },
-    beforeFormatResult: function(result){return result},    // alter result prior to formatting
-    afterFormatResult: function(result){return result},     // alter result after formatting
-    beforeFormatResults: function(results){return results}, // alter results prior to formatting
-    afterFormatResults: function(results){return results},  // alter results after formatting
+    beforeFormatResult: function (result, collectionName, config, definition) { return result; },    // alter result prior to formatting
+    afterFormatResult: function (result, collectionName, config, definition) { return result; },     // alter result after formatting
+    beforeFormatResults: function (results, collectionName, config, definition) { return results; }, // alter results prior to formatting
+    afterFormatResults: function (results, collectionName, config, definition) { return results; },  // alter results after formatting
     cache: {                  // optional cache engine
       engine : require('someCacheEngine')
     }
