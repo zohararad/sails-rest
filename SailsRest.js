@@ -35,7 +35,7 @@ module.exports = (function() {
    */
   function formatResult(result, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResult)) {
-      result = config.beforeFormatResult(result);
+      result = config.beforeFormatResult(result, collectionName, config, definition);
     }
 
     _.each(definition, function(def, key) {
@@ -45,7 +45,7 @@ module.exports = (function() {
     });
 
     if (_.isFunction(config.afterFormatResult)) {
-      result = config.afterFormatResult(result);
+      result = config.afterFormatResult(result, collectionName, config, definition);
     }
 
     return result;
@@ -61,7 +61,7 @@ module.exports = (function() {
    */
   function formatResults(results, collectionName, config, definition) {
     if (_.isFunction(config.beforeFormatResults)) {
-      results = config.beforeFormatResults(results);
+      results = config.beforeFormatResults(results, collectionName, config, definition);
     }
 
     results.forEach(function(result) {
@@ -69,7 +69,7 @@ module.exports = (function() {
     });
 
     if (_.isFunction(config.afterFormatResults)) {
-      results = config.afterFormatResults(results);
+      results = config.afterFormatResults(results, collectionName, config, definition);
     }
 
     return results;
