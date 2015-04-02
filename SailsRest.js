@@ -223,6 +223,11 @@ module.exports = (function() {
     // Add pathname to connection
     config.pathname = pathname;
 
+    // Let user customize config before request is run
+    if (_.isFunction(config.beforeRequest)) {
+      config = config.beforeRequest(config);
+    }
+
     // Format URI
     var uri = url.format(config);
 
@@ -294,7 +299,8 @@ module.exports = (function() {
       beforeFormatResult: null,
       afterFormatResult: null,
       beforeFormatResults: null,
-      afterFormatResults: null
+      afterFormatResults: null,
+      beforeRequest: null
     },
 
     registerConnection: function(connection, collections, cb) {
