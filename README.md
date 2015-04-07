@@ -1,4 +1,4 @@
-![image_squidhome@2x.png](http://i.imgur.com/RIvu9.png) 
+![image_squidhome@2x.png](http://i.imgur.com/RIvu9.png)
 
 # SailsRest
 
@@ -17,7 +17,7 @@ $ npm install sails-rest
 sails-rest is compatible with Sails.js v0.9.0 and above.
 
 For Sails.js v0.9 please use v0.0.3 version of sails-rest.
- 
+
 For Sails.js v0.10 please use v0.0.4 version of sails-rest (or newer).
 
 ## Sails Configuration
@@ -40,6 +40,7 @@ module.exports.adapters = {
     resource: null,           // resource path to use (overrides model name)
     action: null,             // action to use for the given resource ([resource]/run)
     query: {},                // query parameters to provide with all GET requests, accepts an object or a function (view below).
+    pluralize: true,          // Set to false to prevent from pluralizing the model name
     methods: {                // overrides default HTTP methods used for each CRUD action
       create: 'post',
       find: 'get',
