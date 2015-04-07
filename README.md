@@ -1,4 +1,4 @@
-![image_squidhome@2x.png](http://i.imgur.com/RIvu9.png) 
+![image_squidhome@2x.png](http://i.imgur.com/RIvu9.png)
 
 # SailsRest
 
@@ -17,7 +17,7 @@ $ npm install sails-rest
 sails-rest is compatible with Sails.js v0.9.0 and above.
 
 For Sails.js v0.9 please use v0.0.3 version of sails-rest.
- 
+
 For Sails.js v0.10 please use v0.0.4 version of sails-rest (or newer).
 
 ## Sails Configuration
@@ -50,6 +50,7 @@ module.exports.adapters = {
     afterFormatResult: function (result, collectionName, config, definition) { return result; },     // alter result after formatting
     beforeFormatResults: function (results, collectionName, config, definition) { return results; }, // alter results prior to formatting
     afterFormatResults: function (results, collectionName, config, definition) { return results; },  // alter results after formatting
+    beforeRequest: function(config) { return config; }, // Alter config prior to request gets run
     cache: {                  // optional cache engine
       engine : require('someCacheEngine')
     }
