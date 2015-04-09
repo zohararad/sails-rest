@@ -40,6 +40,7 @@ module.exports.adapters = {
     resource: null,           // resource path to use (overrides model name)
     action: null,             // action to use for the given resource ([resource]/run)
     query: {},                // query parameters to provide with all GET requests, accepts an object or a function (view below).
+    pluralize: true,          // Set to false to prevent from pluralizing the model name
     methods: {                // overrides default HTTP methods used for each CRUD action
       create: 'post',
       find: 'get',

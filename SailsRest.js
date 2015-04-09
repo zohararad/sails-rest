@@ -170,7 +170,7 @@ module.exports = (function() {
     // if resource name not set in config,
     // try to get it from pluralized form of collectionName
     if (!config.resource) {
-      config.resource = _i.pluralize(collectionName);
+      config.resource = config.pluralize === true ? _i.pluralize(collectionName) : collectionName;
     }
 
     pathname = config.getPathname(config, restMethod, values, options);
@@ -289,6 +289,7 @@ module.exports = (function() {
       resource: null,
       action: null,
       query: {},
+      pluralize: true,
       methods: {
         create: 'post',
         find: 'get',
