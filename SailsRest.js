@@ -304,7 +304,8 @@ module.exports = (function() {
       afterFormatResult: null,
       beforeFormatResults: null,
       afterFormatResults: null,
-      beforeRequest: null
+      beforeRequest: null,
+      transformData: null
     },
 
     registerConnection: function(connection, collections, cb) {
