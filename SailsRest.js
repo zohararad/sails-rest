@@ -267,6 +267,9 @@ module.exports = (function() {
 
       // Make request via restify
       if (opt) {
+        if (_.isFunction(config.transformData)) {
+          opt = config.transformData(opt, config, methodName);
+        }
         connection[restMethod](path, opt, cb);
       } else {
         connection[restMethod](path, cb);
