@@ -267,6 +267,9 @@ module.exports = (function() {
 
       // Make request via restify
       if (opt) {
+        if (_.isFunction(config.transformData)) {
+          opt = config.transformData(opt, config, methodName);
+        }
         connection[restMethod](path, opt, cb);
       } else {
         connection[restMethod](path, cb);
@@ -301,7 +304,8 @@ module.exports = (function() {
       afterFormatResult: null,
       beforeFormatResults: null,
       afterFormatResults: null,
-      beforeRequest: null
+      beforeRequest: null,
+      transformData: null
     },
 
     registerConnection: function(connection, collections, cb) {

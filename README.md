@@ -52,6 +52,7 @@ module.exports.adapters = {
     beforeFormatResults: function (results, collectionName, config, definition) { return results; }, // alter results prior to formatting
     afterFormatResults: function (results, collectionName, config, definition) { return results; },  // alter results after formatting
     beforeRequest: function(config) { return config; }, // Alter config prior to request gets run
+    transformData: function(opt, config, methodName) { return opt; }, // Alter outgoing data prior to request being run
     cache: {                  // optional cache engine
       engine : require('someCacheEngine')
     }
