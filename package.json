@@ -1,6 +1,6 @@
 {
   "name": "sails-rest",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "REST adapter for Sails.js",
   "main": "SailsRest.js",
   "scripts": {
