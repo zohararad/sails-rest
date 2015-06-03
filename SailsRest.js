@@ -349,6 +349,20 @@ module.exports = (function() {
       cb();
     },
 
+    teardown: function (connection, cb) {
+      if (typeof connection == 'function') {
+        cb = connection;
+        connection = null;
+      }
+      if (connection == null) {
+        connections = {};
+        return cb();
+      }
+      if(!connections[connection]) return cb();
+      delete connections[connection];
+      cb();
+    },
+
     create: function(connection, collectionName, values, cb) {
       makeRequest(connection, collectionName, 'create', cb, null, values);
     },
