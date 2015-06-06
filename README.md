@@ -5,7 +5,7 @@
 Sails.js Waterline adapter for REST APIs
 
 > ## v0.1.0 Release Notice
-> sals-rest **v0.1.0** is just around the corner. Please take a moment and check out (v0.1.0-waterline-v0.10)[https://github.com/zohararad/sails-rest/tree/v0.1.0-waterline-v0.10] branch
+> sals-rest **v0.1.0** is just around the corner. Please take a moment and check out []v0.1.0-waterline-v0.10(https://github.com/zohararad/sails-rest/tree/v0.1.0-waterline-v0.10) branch
 > which contains a complete re-write of the adapter with some cool features and a much simpler and cleaner code. PRs are welcome!
 
 ## Installation
