@@ -1,215 +1,182 @@
 ![image_squidhome@2x.png](http://i.imgur.com/RIvu9.png)
 
-# SailsRest
+# waterline-rest
 
-Sails.js Waterline adapter for REST APIs
+Provides easy access to RESTful APIs from Sails.js & Waterline.
 
-## Installation
+This module is a Waterline/Sails adapter, an early implementation of a rapidly-developing, tool-agnostic data standard.  Its goal is to provide a set of declarative interfaces, conventions, and best-practices for integrating with all sorts of data sources.  Not just databases-- external APIs, proprietary web services, or even hardware.
 
-Install from NPM.
-
-```bash
-$ npm install sails-rest
-```
+Strict adherence to an adapter specification enables the (re)use of built-in generic test suites, standardized documentation, reasonable expectations around the API for your users, and overall, a more pleasant development experience for everyone.
 
 ## Compatibility
 
-sails-rest is compatible with Sails.js v0.9.0 and above.
+> `sails-rest` version 0.2.x is **not** backwards compatible with 0.1.x . In fact, version 0.2.x is a complete rewrite of the adapter and is compatible with Waterline 0.10.x and above.
 
-For Sails.js v0.9 please use v0.0.3 version of sails-rest.
+### Installation
 
-For Sails.js v0.10 please use v0.0.4 version of sails-rest (or newer).
+To install this adapter, run:
 
-## Sails Configuration
+```sh
+$ npm install sails-rest
+```
 
-Add the following config to the config/adapters.js file:
+### Configuration
+
+Add the following config to the `config/connections.js` file:
 
 ```javascript
-module.exports.adapters = {
-
-  default: 'rest',
+module.exports.connections = {
 
   rest: {
-    module: 'sails-rest',
-    type: 'json',             // expected response type (json | string | http)
-    host: 'api.url.io',       // api host
-    port: 80,                 // api port
-    protocol: 'http',         // HTTP protocol (http | https)
-    rejectUnauthorized: true, // prevent https connections that use a self-signed certificate
-    pathname: '/api/v1',      // base api path
-    resource: null,           // resource path to use (overrides model name)
-    action: null,             // action to use for the given resource ([resource]/run)
-    query: {},                // query parameters to provide with all GET requests, accepts an object or a function (view below).
-    pluralize: true,          // Set to false to prevent from pluralizing the model name
-    methods: {                // overrides default HTTP methods used for each CRUD action
-      create: 'post',
-      find: 'get',
-      update: 'put',
-      destroy: 'del'
-    },
-    beforeFormatResult: function (result, collectionName, config, definition) { return result; },    // alter result prior to formatting
-    afterFormatResult: function (result, collectionName, config, definition) { return result; },     // alter result after formatting
-    beforeFormatResults: function (results, collectionName, config, definition) { return results; }, // alter results prior to formatting
-    afterFormatResults: function (results, collectionName, config, definition) { return results; },  // alter results after formatting
-    beforeRequest: function(config) { return config; }, // Alter config prior to request gets run
-    transformData: function(opt, config, methodName) { return opt; }, // Alter outgoing data prior to request being run
-    cache: {                  // optional cache engine
-      engine : require('someCacheEngine')
+    adapter: 'sails-rest',
+    host:     'localhost:8080',  // api host
+    protocol: 'http',            // api HTTP protocol
+    pathname: ''                 // api endpoint path name
+    headers:  {},                // Optional HTTP headers    
+    hooks: {
+      merge:    true,            // flag that indicates whether or not to merge build-in hooks with user-provided hooks
+      before:   [],              // array of hook functions that run before a request
+      after:    []               // array of hook functions that run after a request
     }
   }
 
 };
 ```
 
-## Caching
+### Hooks
 
-To cache API responses, you can add an object to the adapter's configuration with an attribute named `engine` that responds
-to the following methods:
+`sails-rest` supports defining *before* and *after* hooks that are executed before and after issuing an HTTP request respectively.
+Hooks are simply functions that conform to a specific signature and are run in sequence, allowing you to transform various parts of the request
+and response flow.
 
-* `get(key)` - get cache key
-* `set(key, value)` - set value on key
-* `del(key)` - delete value identified by `key` from cache
+Since REST APIs have various and individual implementations, hooks are `sails-rest`'s way of letting the developer 
+add custom logic to API calls without polluting the adapter's code.
 
-An example caching configuration using LRU cache (`npm install --save lru-cache`) will look something like:
+#### before hooks
 
-```javascript
-// under config/cache.js
+Before hooks will run in sequence before issuing an HTTP request and are defined in the `hooks.before` array on the configuration object.
 
-var LRU = require('lru-cache');
-var options = {
-  max: 100, // Max number of items in cache
-  maxAge: 60 * 1000 // Max age in ms
-};
-var cache = LRU(options);
-
-module.exports.cache = {
-  get: function(key) {
-    return cache.get(key);
-  },
-
-  set: function(key, val) {
-    return cache.set(key, val);
-  },
-
-  del: function(key) {
-    cache.del(key);
-  }
-};
-```
-
-Cache keys are computed from the API request URLs. This means that each unique URL will have its own cache key.
-
-At the moment, cache busting is done by exact key only. This means that if you fetch `/users` and then update
-`/users/1`, the cached objects under `/users` will not be purged to reflect your changes.
-
-## Query option
-
-The query option accepts either an object or a function returning an object. This function is only executed for GET requests.
-
-The function's signature is:
+Each hook must conform to the following signature:
 
 ```javascript
-function (config, collectionName, methodName, options) {}
+
+/**
+ * @param {Request} req - SuperAgent HTTP Request object
+ * @param {String}  method - HTTP request method
+ * @param {Object}  config - configuration object used to hold request-specific configuration. this is used to avoid polluting the connection's own configuration object.
+ * @param {Object}  conn - connection configuration object:
+ *    - {Object} connection - Waterline connection configuration object
+ *    - {String} collection - collection name.
+ *    - {Object} options - query options object. contains Waterline query conditions (where), sort, limit etc. as per Waterline's API.
+ *    - {Array<Object>} values - values of records to create.
+ */
+function someBeforeHook(req, method, config, conn){
+  // add custom logic here
+}
 ```
 
-* _config_: the current configuration object
-* _collectionName_: the name of the collection queried. ex: users
-* _methodName_: the HTTP method used for the query, always GET for now.
-* _options_: query parameters sent with the request, which by default are sails waterline query language
+> #### Important!
+> If you choose not to merge the built-in hooks with your own hooks, you must provide a hook that creates an `endpoint` field on the `config` object. This field is used to resolve the HTTP request end-point.
 
-If you are using a function, you are 100% responsible for generating query parameters sent with the request.
+#### after hooks
 
-By default, the query parameters generated by this adapter uses the sails waterline query language. So this is useful
-if you need to convert parameters sent to your backend.
+Before hooks will run in sequence after the HTTP request ends and are defined in the `hooks.after` array on the configuration object.
 
-Example:
-
-By default, this adapter generates:
-
-```
-GET /api/users?where={name:'John'}&limit=10&skip=0
-```
+Each hook must conform to the following signature:
 
 ```javascript
-    ...
-    query: function (config, collectionName, methodName, options) {
-
-        var newOptions = {};
-
-        if ( options.where.name ) newOptions.name = options.where.name;
-
-        if ( options.limit ) newOptions.itemsPerPage = options.limit;
-
-        // dont forget to pass on skip because this function is responsible for generating all the parameters
-        newOptions.skip = options.skip;
-
-        return newOptions;
-
-    },
-    ...
+/**
+ * Process HTTP response. Converts response objects date fields from Strings to Dates.
+ * @param {Error} err - HTTP response error
+ * @param {Response} res - SuperAgent HTTP Response object
+ */
+function someAfterHook(err, res){
+  // add custom logic here
+}
 ```
 
-This function will generate:
+#### Build-in hooks
 
-```
-GET /api/users?name=John&itemsPerPage=10&skip=0
-```
+`sails-rest` comes in with two built-in *before* hooks and one build-in *after* hook.
 
-## TODO
+##### before hook - HTTP end-point builder
 
-* Improve cache busting
-* Add support for async cache engines (eg. redis_client)
+This hook build the final HTTP endpoint from your host, protocol and pathname configurations, along with
+the collection name on which the adapter is configured, and optionally the record ID.
 
-## Change Log
+Given the default adapter host, scheme and pathname configuration, and a model named `user`, this hook will create the following HTTP endpoints:
 
-### v0.0.3
++ `find()` - http://localhost:8080/user
++ `find(id)` - http://localhost:8080/user/:id
++ `create()` - http://localhost:8080/user
++ `update()` - http://localhost:8080/user
++ `update(id)` - http://localhost:8080/user/:id
++ `delete()` - http://localhost:8080/user
++ `delete(id)` - http://localhost:8080/user/:id
 
-* Fixing issue where only a single set of connection settings were stored, not separate settings for each model.
-* Updating restler dependency to latest version.
-* Adhering to JSHint object dot notation recommendation.
-* Making cache configurable per collection.
-* Reworking how requests are made. Now using a single method for making the request. Also allowing for specification of the method for each type of request and allowing overrides/defaults for resource action and query in the url.
-* Fixing error handling conditional.
-* Fixing issue with cloning of connection.
-* Fixing improper methodName and restMethod.
-* Allowing for destroying all items in collection as well as by query, instead of only id.
-* Expanding test application to better suit suite of Waterline tests.
-* Reworking result formatting.
-* Referencing GitHub repo for reslter due to bugs that cause errors with tests.
-* Decoding URL components for test support application.
-* Abstracting logic to allow for deletion and updates of multiple items.
-* Removing unused variable.
-* Converting REST client from "restler" to "restify" due to bugs with restler module.
-* Adding method to modify result before and after format and fixing formatResults method.
-* Allowing for formatting before and after both individual results and all results.
-* Expecting return value for result formatting functions.
-* Modifying README to reflect new config options.
-* Modifying README formatting to allow for better legibility on GitHub page.
-* Removing redundant config.
+##### before hook - Query options cleaner
 
-## Contributors
+This hook removes the `where` object added by Waterline from request query options, and adds that object fields to the main options object.
 
-[Christopher M. Mitchell](https://github.com/divThis)
+Given the query options object `{where: {first_name: "Tedd"}, sort: {first_name: 1}}`, this hook will modify the query options object to: `{first_name: "Tedd", sort: {first_name: 1}}`.
 
-## MIT License
+This behaviour is useful and probably desired since most APIs are not likely to "understand" Waterline's query jargon.
 
-Copyright (c) 2013 Zohar Arad
+##### after hook - response Date fields formatting
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+This hook iterates over HTTP response objects and looks for ISO formatted date strings on response object fields. If found,
+this fields will be converted into Javascript Date objects.
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+#### merging hooks
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+The adapter's configuration allows you to specify whether you wish to merge your own hooks with the above built-in hooks or not, by setting the `hooks.merge` flag to either `true` or `false`.
+
+If you choose not to use the above built-in hooks, please make sure that the first `before` hook you supply creates an `endpoint` field on the `config` object, which points to the HTTP endpoint you wish
+to issue requests against.
+
+If you're unsure, please take a look at the `createEndpoint` function inside [lib/hooks.js](./lib/hooks.js)
+
+### Interfaces
+
+This adapter implements the [semantic](https://github.com/balderdashy/sails-docs/blob/master/contributing/adapter-specification.md#semantic-interface) interface and exposes the following methods:
+                                                                                                                                                                 
+###### `find()`
+
+Find one or more records. Translated to an HTTP `GET` request.
+
+###### `create()`
+
+Create one or more records. Translated to an HTTP `POST` request.
+
+###### `update()`
+
+Update one or more records. Translated to an HTTP `PUT` request.
+
+###### `destroy()`
+
+Destroy one or more records. Translated to an HTTP `DELETE` request.
+
+### Sails.js Resources
+
+- [Stackoverflow](http://stackoverflow.com/questions/tagged/sails.js)
+- [#sailsjs on Freenode](http://webchat.freenode.net/) (IRC channel)
+- [Twitter](https://twitter.com/sailsjs)
+- [Professional/enterprise](https://github.com/balderdashy/sails-docs/blob/master/FAQ.md#are-there-professional-support-options)
+- [Tutorials](https://github.com/balderdashy/sails-docs/blob/master/FAQ.md#where-do-i-get-help)
+- <a href="http://sailsjs.org" target="_blank" title="Node.js framework for building realtime APIs."><img src="https://github-camo.global.ssl.fastly.net/9e49073459ed4e0e2687b80eaf515d87b0da4a6b/687474703a2f2f62616c64657264617368792e6769746875622e696f2f7361696c732f696d616765732f6c6f676f2e706e67" width=60 alt="Sails.js logo (small)"/></a>
+
+### License
+
+**[MIT](./LICENSE)**
+
+&copy; 2015 [Zohar Arad](http://github.com/zohararad)
+
+&copy; 2014 [balderdashy](http://github.com/balderdashy) & [contributors]
+
+[Mike McNeil](http://michaelmcneil.com), [Balderdash](http://balderdash.co) & contributors
+
+[Sails](http://sailsjs.org) is free and open-source under the [MIT License](http://sails.mit-license.org/).
+
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/8acf2fc2ca0aca8a3018e355ad776ed7 "githalytics.com")](http://githalytics.com/balderdashy/waterline-rest/README.md)
+
+
