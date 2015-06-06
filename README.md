@@ -75,22 +75,26 @@ An example caching configuration using LRU cache (`npm install --save lru-cache`
 ```javascript
 // under config/cache.js
 
-var LRU = require("lru-cache"),
-    options = {
-      max: 500,
-      maxAge: 1000 * 10
-    },
-    cache = LRU(options);
-module.exports = cache;
+var LRU = require('lru-cache');
+var options = {
+  max: 100, // Max number of items in cache
+  maxAge: 60 * 1000 // Max age in ms
+};
+var cache = LRU(options);
 
-// under config/adapters.js
+module.exports.cache = {
+  get: function(key) {
+    return cache.get(key);
+  },
 
-  rest: {
-    module   : 'sails-rest',
-    cache    : {
-      engine : require('./cache')
-    }
+  set: function(key, val) {
+    return cache.set(key, val);
+  },
+
+  del: function(key) {
+    cache.del(key);
   }
+};
 ```
 
 Cache keys are computed from the API request URLs. This means that each unique URL will have its own cache key.
