@@ -10,7 +10,7 @@ Strict adherence to an adapter specification enables the (re)use of built-in gen
 
 ## Compatibility
 
-> `sails-rest` version 0.2.x is **not** backwards compatible with 0.1.x . In fact, version 0.2.x is a complete rewrite of the adapter and is compatible with Waterline 0.10.x and above.
+> `sails-rest` version 0.1.x is **not** backwards compatible with 0.0.x . In fact, version 0.1.x is a complete rewrite of the adapter and is compatible with Waterline 0.10.x and above.
 
 ### Installation
 
