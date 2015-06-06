@@ -1,6 +1,6 @@
 ![image_squidhome@2x.png](http://i.imgur.com/RIvu9.png)
 
-# waterline-rest
+# waterline-rest [![Build Status](https://travis-ci.org/zohararad/sails-rest.svg?branch=v0.1.0-waterline-v0.10)](https://travis-ci.org/zohararad/sails-rest)
 
 Provides easy access to RESTful APIs from Sails.js & Waterline.
 
