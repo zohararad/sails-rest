@@ -47,7 +47,7 @@ module.exports.connections = {
 
 `sails-rest` supports defining *before* and *after* hooks that are executed before and after issuing an HTTP request respectively.
 Hooks are simply functions that conform to a specific signature and are run in sequence, allowing you to transform various parts of the request
-and response flow.
+and response components.
 
 Since REST APIs have various and individual implementations, hooks are `sails-rest`'s way of letting the developer 
 add custom logic to API calls without polluting the adapter's code.
@@ -163,7 +163,7 @@ Destroy one or more records. Translated to an HTTP `DELETE` request.
 - [Twitter](https://twitter.com/sailsjs)
 - [Professional/enterprise](https://github.com/balderdashy/sails-docs/blob/master/FAQ.md#are-there-professional-support-options)
 - [Tutorials](https://github.com/balderdashy/sails-docs/blob/master/FAQ.md#where-do-i-get-help)
-- <a href="http://sailsjs.org" target="_blank" title="Node.js framework for building realtime APIs."><img src="https://github-camo.global.ssl.fastly.net/9e49073459ed4e0e2687b80eaf515d87b0da4a6b/687474703a2f2f62616c64657264617368792e6769746875622e696f2f7361696c732f696d616765732f6c6f676f2e706e67" width=60 alt="Sails.js logo (small)"/></a>
+- [Sails.js](http://sailsjs.org/)
 
 ### License
 
@@ -171,12 +171,10 @@ Destroy one or more records. Translated to an HTTP `DELETE` request.
 
 &copy; 2015 [Zohar Arad](http://github.com/zohararad)
 
-&copy; 2014 [balderdashy](http://github.com/balderdashy) & [contributors]
+&copy; 2014 [balderdashy](http://github.com/balderdashy) & contributors
 
 [Mike McNeil](http://michaelmcneil.com), [Balderdash](http://balderdash.co) & contributors
 
 [Sails](http://sailsjs.org) is free and open-source under the [MIT License](http://sails.mit-license.org/).
-
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/8acf2fc2ca0aca8a3018e355ad776ed7 "githalytics.com")](http://githalytics.com/balderdashy/waterline-rest/README.md)
 
 
