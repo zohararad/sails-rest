@@ -44,6 +44,14 @@ module.exports = (function() {
       }
     });
 
+    if (result.createdAt) {
+      result.createdAt = new Date(result.createdAt);
+    }
+
+    if (result.updatedAt) {
+      result.updatedAt = new Date(result.updatedAt);
+    }
+
     if (_.isFunction(config.afterFormatResult)) {
       result = config.afterFormatResult(result, collectionName, config, definition);
     }
@@ -130,6 +138,28 @@ module.exports = (function() {
 
     }
 
+  }
+
+  /**
+   * Generate the query object for nested objects using JSON format
+   * @param {Object} query - original query object
+   * @returns {Object}
+   */
+  function prepareQuery(query){
+    var keys = Object.keys(query);
+
+    _.each(keys, function (key) {
+      var value = query[key];
+
+      if (_.isString(value) || _.isNumber(value)) {
+        query[key] = value;
+        return;
+      }
+
+      query[key] = JSON.stringify(value);
+    });
+
+    return query;
   }
 
   /**
@@ -228,6 +258,8 @@ module.exports = (function() {
       config = config.beforeRequest(config);
     }
 
+    config.query = prepareQuery(config.query);
+
     // Format URI
     var uri = url.format(config);
 
@@ -250,7 +282,7 @@ module.exports = (function() {
           restError = new RestError(err.message, {originalError: err, data: data});
           callback(restError);
         } else {
-          if (methodName === 'find') {
+          if (methodName === 'find' || methodName === 'update') {
             r = getResultsAsCollection(data, collectionName, config, definition);
             if (cache) {
               cache.engine.set(uri, r);
@@ -261,6 +293,7 @@ module.exports = (function() {
               cache.engine.del(uri);
             }
           }
+
           callback(null, r);
         }
       };

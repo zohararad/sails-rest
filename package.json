@@ -36,13 +36,13 @@
     "express": "3.x",
     "mocha": "^1.10.0",
     "multer": "^0.1.4",
+    "sails-memory": "^0.10.4",
     "waterline-adapter-tests": "^0.10.0"
   },
   "waterlineAdapter": {
     "waterlineVersion": "^0.10.0",
     "interfaces": [
-      "semantic",
-      "queryable"
+      "semantic"
     ]
   }
 }

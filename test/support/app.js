@@ -3,103 +3,126 @@ var express = require('express'),
     multer = require('multer'),
     app = express(),
     sys = require('sys'),
-    _ = require('lodash');
+    _ = require('lodash'),
+    Database = require('sails-memory/lib/database');
 
-var Models = {},
-    ids = {};
+var memory = new Database();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(multer());
 
+function prepareQuery(query){
+  var result = {},
+      keys = Object.keys(query);
+
+  _.each(keys, function (key) {
+    var value = query[key];
+
+    try{
+      query[key] = JSON.parse(value);
+    } catch(e) {
+      query[key] = value;
+    }
+  });
+
+  ['skip', 'limit', 'offset'].forEach(function(key){
+    if(query[key] !== undefined){
+      result[key] = query[key];
+      delete query[key];
+    }
+  });
+
+  result.where = query;
+  return result;
+}
+
+function ensureCollection(name, cb) {
+    memory.registerCollection(name, {
+      definition: {
+        id: {
+          type: 'integer',
+          autoIncrement: true
+        }
+      }
+    }, cb);
+}
+
 app.get('/api/v1/:collection', function(req, res){
   var collection = req.params.collection,
-      id = parseInt(req.params.id, 10),
-      query = _.isEmpty(req.query) ? null : req.query,
-      r = [];
+      query = _.isEmpty(req.query) ? {} : prepareQuery(req.query);
 
-  if (!_.isEmpty(query)) {
-    _.each(query, function(param, key) {
-      query[key] = decodeURIComponent(param);
+  ensureCollection(collection, function () {
+    memory.select(collection, query, function (err, data) {
+      res.json(data);
     });
-  }
-
-  if (Models[collection]) {
-    r = _.filter(Models[collection], query);
-  }
-
-  res.json(r);
+  });
 });
 
 app.get('/api/v1/:collection/:id', function(req, res){
   var collection = req.params.collection,
       id = parseInt(req.params.id, 10),
-      query = {id: id},
-      r = {};
+      query = {id: id};
 
-  if (Models[collection]) {
-    r = _.find(Models[collection], query);
-  }
-
-  res.json(r);
+  ensureCollection(collection, function () {
+    memory.select(collection, { where: query }, function (err, data) {
+      res.json(data);
+    });
+  });
 });
 
 app.post('/api/v1/:collection', function(req, res){
-  var collection = req.params.collection,
-      r = {};
+  var collection = req.params.collection;
 
-  if (!Models[collection]) {
-    Models[collection] = [];
-    ids[collection] = 0;
-  }
-
-  Model = Models[collection];
-
-  ids[collection]++;
-
-  id = ids[collection];
-
-  r = _.cloneDeep(req.body);
-  r.id = id;
-  r.createdAt = r.updatedAt = new Date();
-
-  Model.push(r);
-
-  res.json(r);
+  ensureCollection(collection, function () {
+    memory.insert(collection, req.body, function (err, data) {
+      res.json(data);
+    });
+  });
 });
 
 app.put('/api/v1/:collection/:id', function(req, res){
   var collection = req.params.collection,
       id = parseInt(req.params.id, 10),
-      query = {id: id},
-      r = {};
+      query = {id: id};
 
-  if (Models[collection]) {
-    r = _.find(Models[collection], query);
+  ensureCollection(collection, function () {
+    memory.update(collection, query, req.body, function (err, data) {
+      res.json(data);
+    });
+  });
+});
 
-    _.extend(r, req.body, {updatedAt: new Date()});
-  }
+app.put('/api/v1/:collection', function(req, res){
+  var collection = req.params.collection;
 
-  res.json(r);
+  ensureCollection(collection, function () {
+    memory.update(collection, {}, req.body, function (err, data) {
+      res.json(data);
+    });
+  });
+});
+
+app.delete('/api/v1/:collection', function(req, res){
+  var collection = req.params.collection;
+
+  ensureCollection(collection, function () {
+    memory.dropCollection(collection, function (err, data) {
+      res.json(data);
+    });
+  });
 });
 
 app.delete('/api/v1/:collection/:id', function(req, res){
   var collection = req.params.collection,
       id = parseInt(req.params.id, 10),
-      query = {id: id},
-      r = {};
+      query = { where: { id: id} };
 
-  if (Models[collection]) {
-    r = _.find(Models[collection], query);
-
-    var index = _.indexOf(Models[collection], r);
-
-    if (index > -1) {
-      Models[collection].splice(index, 1);
-    }
-  }
-
-  res.json(r);
+  ensureCollection(collection, function () {
+    memory.destroy(collection, query, function (err, data) {
+      res.json(data);
+    });
+  });
 });
 
 module.exports = app;
