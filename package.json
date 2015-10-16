@@ -22,6 +22,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
+    "async": "^1.4.2",
     "lodash": "^3.9.3",
     "restify": "^3.0.3",
     "superagent": "^1.2.0"

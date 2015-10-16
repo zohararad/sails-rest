@@ -69,8 +69,9 @@ Each hook must conform to the following signature:
  *    - {String} collection - collection name.
  *    - {Object} options - query options object. contains Waterline query conditions (where), sort, limit etc. as per Waterline's API.
  *    - {Array<Object>} values - values of records to create.
+ * @param {Function} cb - function that is called when this hook finishes
  */
-function someBeforeHook(req, method, config, conn){
+function someBeforeHook(req, method, config, conn, cb){
   // add custom logic here
 }
 ```
@@ -89,8 +90,9 @@ Each hook must conform to the following signature:
  * Process HTTP response. Converts response objects date fields from Strings to Dates.
  * @param {Error} err - HTTP response error
  * @param {Response} res - SuperAgent HTTP Response object
+ * @param {Function} cb - function that is called when this hook finishes
  */
-function someAfterHook(err, res){
+function someAfterHook(err, res, cb){
   // add custom logic here
 }
 ```
