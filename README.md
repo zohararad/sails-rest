@@ -31,8 +31,8 @@ module.exports.connections = {
     adapter: 'sails-rest',
     host:     'localhost:8080',  // api host
     protocol: 'http',            // api HTTP protocol
-    pathname: ''                 // api endpoint path name
-    headers:  {},                // Optional HTTP headers    
+    pathname: '',                // api endpoint path name
+    headers:  {},                // Optional HTTP headers
     hooks: {
       merge:    true,            // flag that indicates whether or not to merge build-in hooks with user-provided hooks
       before:   [],              // array of hook functions that run before a request
