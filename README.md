@@ -158,6 +158,19 @@ Update one or more records. Translated to an HTTP `PUT` request.
 
 Destroy one or more records. Translated to an HTTP `DELETE` request.
 
+### Examples
+
+See the [examples](/zohararad/sails-rest/tree/master/examples) folder for
+an example of simple model and CRUD operations in a Sails.js controller.
+
+#### Arbitrary HTTP Requests
+
+If your backend REST api does not conform to sails-rest / Waterline conventions
+of URL structure or HTTP verbs, you can always create your own HTTP queries and
+add them as static methods in your model.
+
+See `User.query` in the [User.js](/zohararad/sails-rest/tree/master/examples/User.js) model example.
+
 ### Sails.js Resources
 
 - [Stackoverflow](http://stackoverflow.com/questions/tagged/sails.js)
